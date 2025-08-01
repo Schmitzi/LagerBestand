@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "dev:frontend": "tsc -p public/tsconfig.json --watch",
-    "build": "npm run build:backend && npm run build:frontend",
+    "dev:frontend": "echo 'Using plain JavaScript'",
+    "build": "npm run build:backend",
     "build:backend": "tsc -p tsconfig.json",
-    "build:frontend": "echo 'Frontend uses plain JavaScript - no compilation needed'",
+    "build:frontend": "echo 'Using plain JavaScript - no compilation needed'",
     "start": "node dist/server.js"
   },
   "dependencies": {

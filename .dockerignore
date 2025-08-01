@@ -8,6 +8,6 @@ Dockerfile
 .dockerignore
 coverage
 .nyc_output
-public/*.js
-public/*.js.map
 *.log
+public/*.ts
+public/tsconfig.json

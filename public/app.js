@@ -1,87 +1,133 @@
-// Inventory Tracker - Simple JavaScript Version (no modules)
+// Equipment Borrowing System JavaScript
 
 // Configuration
 const API_BASE = '/api';
 
 // Global state
 let currentEditId = null;
-let inventoryItems = [];
+let equipment = [];
+let borrowings = [];
+let overdueItems = [];
+let currentView = 'equipment';
 
 // DOM elements
-let modal, deleteModal, loading, toast, itemForm, searchInput, inventoryTable;
-
-// Search timeout reference
-let searchTimeout;
+let equipmentModal, borrowModal, returnModal, loading, toast;
+let equipmentForm, borrowForm, returnForm;
+let equipmentTable, borrowingsTable, overdueTable;
+let searchInput;
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Equipment Borrowing System loading...');
     initializeElements();
-    loadInventory();
+    loadData();
     setupEventListeners();
+    setupTabNavigation();
+    
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const borrowingDateInput = document.getElementById('borrowingDate');
+    const expectedReturnDateInput = document.getElementById('expectedReturnDate');
+    const actualReturnDateInput = document.getElementById('actualReturnDate');
+    
+    if (borrowingDateInput) borrowingDateInput.value = today;
+    if (expectedReturnDateInput) expectedReturnDateInput.value = nextWeek;
+    if (actualReturnDateInput) actualReturnDateInput.value = today;
 });
 
-// Helper function to get element by ID with error handling
-function getElementById(id) {
-    const element = document.getElementById(id);
-    if (!element) {
-        console.error(`Required element not found: ${id}`);
-        return null;
-    }
-    return element;
-}
-
-// Initialize DOM elements
 function initializeElements() {
-    modal = getElementById('modal');
-    deleteModal = getElementById('deleteModal');
-    loading = getElementById('loading');
-    toast = getElementById('toast');
-    itemForm = getElementById('itemForm');
-    searchInput = getElementById('searchInput');
-    inventoryTable = getElementById('inventoryTable');
+    // Modals
+    equipmentModal = document.getElementById('equipmentModal');
+    borrowModal = document.getElementById('borrowModal');
+    returnModal = document.getElementById('returnModal');
+    loading = document.getElementById('loading');
+    toast = document.getElementById('toast');
+    
+    // Forms
+    equipmentForm = document.getElementById('equipmentForm');
+    borrowForm = document.getElementById('borrowForm');
+    returnForm = document.getElementById('returnForm');
+    
+    // Tables
+    equipmentTable = document.getElementById('equipmentTable');
+    borrowingsTable = document.getElementById('borrowingsTable');
+    overdueTable = document.getElementById('overdueTable');
+    
+    // Other elements
+    searchInput = document.getElementById('searchInput');
+    
+    console.log('Elements initialized');
 }
 
-// Event listeners setup
 function setupEventListeners() {
-    const addItemBtn = document.getElementById('addItemBtn');
-    const closeModalBtn = document.getElementById('closeModal');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const cancelDeleteBtn = document.getElementById('cancelDelete');
-    const confirmDeleteBtn = document.getElementById('confirmDelete');
-    const closeToastBtn = document.getElementById('closeToast');
+    // Header buttons
+    document.getElementById('addEquipmentBtn')?.addEventListener('click', () => openEquipmentModal());
+    document.getElementById('borrowBtn')?.addEventListener('click', () => openBorrowModal());
+    document.getElementById('returnBtn')?.addEventListener('click', () => openReturnModal());
     
-    if (addItemBtn) addItemBtn.addEventListener('click', () => openModal());
-    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-    if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteModal);
-    if (confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', handleConfirmDelete);
-    if (closeToastBtn) closeToastBtn.addEventListener('click', hideToast);
+    // Equipment modal
+    document.getElementById('closeEquipmentModal')?.addEventListener('click', closeEquipmentModal);
+    document.getElementById('cancelEquipmentBtn')?.addEventListener('click', closeEquipmentModal);
+    equipmentForm?.addEventListener('submit', handleEquipmentSubmit);
     
-    if (itemForm) itemForm.addEventListener('submit', handleFormSubmit);
-    if (searchInput) searchInput.addEventListener('input', handleSearch);
+    // Borrow modal
+    document.getElementById('closeBorrowModal')?.addEventListener('click', closeBorrowModal);
+    document.getElementById('cancelBorrowBtn')?.addEventListener('click', closeBorrowModal);
+    borrowForm?.addEventListener('submit', handleBorrowSubmit);
     
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) closeModal();
-        });
-    }
+    // Return modal
+    document.getElementById('closeReturnModal')?.addEventListener('click', closeReturnModal);
+    document.getElementById('cancelReturnBtn')?.addEventListener('click', closeReturnModal);
+    returnForm?.addEventListener('submit', handleReturnSubmit);
     
-    if (deleteModal) {
-        deleteModal.addEventListener('click', function(e) {
-            if (e.target === deleteModal) closeDeleteModal();
-        });
-    }
+    // Toast
+    document.getElementById('closeToast')?.addEventListener('click', hideToast);
     
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeModal();
-            closeDeleteModal();
-        }
-        if (e.ctrlKey && e.key === 'n') {
-            e.preventDefault();
-            openModal();
-        }
+    // Search
+    searchInput?.addEventListener('input', handleSearch);
+    
+    console.log('Event listeners set up');
+}
+
+function setupTabNavigation() {
+    document.getElementById('equipmentTab')?.addEventListener('click', () => switchTab('equipment'));
+    document.getElementById('borrowingsTab')?.addEventListener('click', () => switchTab('borrowings'));
+    document.getElementById('overdueTab')?.addEventListener('click', () => switchTab('overdue'));
+}
+
+function switchTab(view) {
+    currentView = view;
+    
+    // Update tab styling
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'border-b-2', 'border-blue-600', 'text-blue-600');
+        btn.classList.add('text-gray-500', 'hover:text-gray-700');
     });
+    
+    const activeTab = document.getElementById(`${view}Tab`);
+    if (activeTab) {
+        activeTab.classList.add('active', 'border-b-2', 'border-blue-600', 'text-blue-600');
+        activeTab.classList.remove('text-gray-500', 'hover:text-gray-700');
+    }
+    
+    // Show/hide content sections
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    const activeSection = document.getElementById(`${view}Section`);
+    if (activeSection) {
+        activeSection.classList.remove('hidden');
+    }
+    
+    // Load appropriate data
+    if (view === 'borrowings') {
+        loadBorrowings();
+    } else if (view === 'overdue') {
+        loadOverdueItems();
+    }
 }
 
 // API functions
@@ -103,118 +149,83 @@ async function apiCall(endpoint, options = {}) {
         return await response.json();
     } catch (error) {
         console.error('API call failed:', error);
-        showToast('error', 'Connection error. Please check if the server is running.');
+        showToast('error', 'Connection error: ' + error.message);
         throw error;
     } finally {
         hideLoading();
     }
 }
 
-async function loadInventory() {
+async function loadData() {
+    await Promise.all([
+        loadEquipment(),
+        loadDashboardStats()
+    ]);
+}
+
+async function loadEquipment() {
     try {
-        console.log('Loading inventory...');
-        const result = await apiCall('/inventory');
-        console.log('Inventory loaded:', result);
-        inventoryItems = result.data || [];
-        renderInventory(inventoryItems);
-        updateStats(inventoryItems);
+        const result = await apiCall('/equipment');
+        equipment = result.data || [];
+        renderEquipment(equipment);
+        populateEquipmentDropdown();
     } catch (error) {
-        console.error('Failed to load inventory:', error);
-        showToast('error', 'Failed to load inventory items');
+        console.error('Failed to load equipment:', error);
     }
 }
 
-async function createItem(itemData) {
+async function loadBorrowings() {
     try {
-        console.log('Creating item:', itemData);
-        const result = await apiCall('/inventory', {
-            method: 'POST',
-            body: JSON.stringify(itemData)
-        });
-        
-        console.log('Create result:', result);
-        
-        if (result.success) {
-            showToast('success', 'Item added successfully!');
-            await loadInventory();
-            closeModal();
-        } else {
-            showToast('error', result.error || 'Failed to add item');
+        console.log('Loading current borrowings...');
+        const result = await apiCall('/borrowings/current');
+        borrowings = result.data || [];
+        console.log('Loaded borrowings:', borrowings.length, borrowings);
+        renderBorrowings(borrowings);
+        populateReturnDropdown();
+    } catch (error) {
+        console.error('Failed to load borrowings:', error);
+    }
+}
+
+async function loadOverdueItems() {
+    try {
+        const result = await apiCall('/borrowings/overdue');
+        overdueItems = result.data || [];
+        renderOverdueItems(overdueItems);
+    } catch (error) {
+        console.error('Failed to load overdue items:', error);
+    }
+}
+
+async function loadDashboardStats() {
+    try {
+        const result = await apiCall('/dashboard');
+        if (result.success && result.data) {
+            updateDashboardStats(result.data);
         }
     } catch (error) {
-        console.error('Failed to create item:', error);
+        console.error('Failed to load dashboard stats:', error);
     }
 }
 
-async function updateItem(id, itemData) {
-    try {
-        const result = await apiCall(`/inventory/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(itemData)
-        });
-        
-        if (result.success) {
-            showToast('success', 'Item updated successfully!');
-            await loadInventory();
-            closeModal();
-        } else {
-            showToast('error', result.error || 'Failed to update item');
-        }
-    } catch (error) {
-        console.error('Failed to update item:', error);
-    }
-}
-
-async function deleteItem(id) {
-    try {
-        const result = await apiCall(`/inventory/${id}`, {
-            method: 'DELETE'
-        });
-        
-        if (result.success) {
-            showToast('success', 'Item deleted successfully!');
-            await loadInventory();
-        } else {
-            showToast('error', result.error || 'Failed to delete item');
-        }
-    } catch (error) {
-        console.error('Failed to delete item:', error);
-    }
-}
-
-async function searchItems(query) {
-    if (!query.trim()) {
-        renderInventory(inventoryItems);
-        return;
-    }
-    
-    try {
-        const result = await apiCall(`/inventory/search/${encodeURIComponent(query)}`);
-        renderInventory(result.data || []);
-    } catch (error) {
-        console.error('Search failed:', error);
-        showToast('error', 'Search failed');
-    }
-}
-
-// UI Rendering functions
-function renderInventory(items) {
-    if (!inventoryTable) return;
+// Rendering functions
+function renderEquipment(items) {
+    if (!equipmentTable) return;
     
     if (items.length === 0) {
-        inventoryTable.innerHTML = `
+        equipmentTable.innerHTML = `
             <tr>
-                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                    <i class="fas fa-inbox text-4xl mb-4 block text-gray-300"></i>
-                    <p class="text-lg">No items found</p>
-                    <p class="text-sm">Add your first item to get started</p>
+                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                    <i class="fas fa-video text-4xl mb-4 block text-gray-300"></i>
+                    <p class="text-lg">No equipment found</p>
+                    <p class="text-sm">Add your first equipment to get started</p>
                 </td>
             </tr>
         `;
         return;
     }
     
-    inventoryTable.innerHTML = items.map(item => `
+    equipmentTable.innerHTML = items.map(item => `
         <tr class="hover:bg-gray-50 transition-colors">
             <td class="px-6 py-4">
                 <div>
@@ -222,203 +233,398 @@ function renderInventory(items) {
                     ${item.description ? `<div class="text-sm text-gray-500">${escapeHtml(item.description)}</div>` : ''}
                 </div>
             </td>
-            <td class="px-6 py-4 text-sm text-gray-900">
-                ${item.sku ? `<code class="bg-gray-100 px-2 py-1 rounded">${escapeHtml(item.sku)}</code>` : '-'}
+            <td class="px-6 py-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    ${escapeHtml(item.rubric)}
+                </span>
             </td>
             <td class="px-6 py-4">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getQuantityBadgeClass(item.quantity)}">
-                    ${item.quantity}
-                </span>
+                <div class="flex items-center">
+                    <span class="text-sm font-medium ${getAvailabilityColor(item)}">
+                        ${item.available_count}/${item.total_count} available
+                    </span>
+                    <div class="ml-2 w-16 bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-600 h-2 rounded-full" style="width: ${(item.available_count/item.total_count)*100}%"></div>
+                    </div>
+                </div>
             </td>
             <td class="px-6 py-4">
                 <span class="inline-flex items-center text-sm text-gray-900">
-                    <i class="fas fa-map-marker-alt text-gray-400 mr-1"></i>
-                    ${escapeHtml(item.location)}
+                    <i class="fas fa-warehouse text-gray-400 mr-1"></i>
+                    ${escapeHtml(item.storage_area)}
                 </span>
-            </td>
-            <td class="px-6 py-4">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    ${escapeHtml(item.category)}
-                </span>
-            </td>
-            <td class="px-6 py-4 text-sm text-gray-900">
-                ${item.price ? `<span class="font-medium">$${parseFloat(item.price).toFixed(2)}</span>` : '-'}
             </td>
             <td class="px-6 py-4 text-sm font-medium">
                 <div class="flex space-x-2">
                     <button 
-                        onclick="editItem('${item.id}')" 
+                        onclick="editEquipment('${item.id}')" 
                         class="action-btn text-blue-600 hover:text-blue-900"
-                        title="Edit item"
-                        type="button"
+                        title="Edit equipment"
                     >
                         <i class="fas fa-edit"></i>
                     </button>
                     <button 
-                        onclick="openDeleteModal('${item.id}', '${escapeHtml(item.name)}')" 
-                        class="action-btn delete text-red-600 hover:text-red-900"
-                        title="Delete item"
-                        type="button"
+                        onclick="deleteEquipment('${item.id}', '${escapeHtml(item.name)}')" 
+                        class="action-btn text-red-600 hover:text-red-900"
+                        title="Delete equipment"
                     >
                         <i class="fas fa-trash"></i>
                     </button>
+                    ${item.available_count > 0 ? `
+                        <button 
+                            onclick="quickBorrow('${item.id}')" 
+                            class="action-btn text-green-600 hover:text-green-900"
+                            title="Quick borrow"
+                        >
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    ` : ''}
                 </div>
             </td>
         </tr>
     `).join('');
 }
 
-function updateStats(items) {
-    const totalItems = items.length;
-    const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    const categories = new Set(items.map(item => item.category)).size;
-    const locations = new Set(items.map(item => item.location)).size;
+function renderBorrowings(items) {
+    if (!borrowingsTable) return;
     
-    animateCounter('totalItems', totalItems);
-    animateCounter('totalQuantity', totalQuantity);
-    animateCounter('totalCategories', categories);
-    animateCounter('totalLocations', locations);
-}
-
-function animateCounter(elementId, targetValue) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    
-    const currentValue = parseInt(element.textContent || '0') || 0;
-    const increment = Math.ceil((targetValue - currentValue) / 20);
-    
-    if (currentValue !== targetValue) {
-        const timer = setInterval(() => {
-            const current = parseInt(element.textContent || '0') || 0;
-            if (current < targetValue) {
-                element.textContent = Math.min(current + increment, targetValue).toString();
-            } else {
-                element.textContent = targetValue.toString();
-                clearInterval(timer);
-            }
-        }, 50);
+    if (items.length === 0) {
+        borrowingsTable.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                    <i class="fas fa-clipboard-list text-4xl mb-4 block text-gray-300"></i>
+                    <p class="text-lg">No active borrowings</p>
+                    <p class="text-sm">All equipment is currently available</p>
+                </td>
+            </tr>
+        `;
+        return;
     }
+    
+    borrowingsTable.innerHTML = items.map(item => `
+        <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4">
+                <div>
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(item.equipment_name)}</div>
+                    <div class="text-xs text-gray-500">${escapeHtml(item.equipment_rubric)}</div>
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${escapeHtml(item.borrower_name)}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div>
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(item.event_name)}</div>
+                    <div class="text-xs text-gray-500">${escapeHtml(item.event_location)}</div>
+                </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-900">
+                ${formatDate(item.borrowing_date)}
+            </td>
+            <td class="px-6 py-4">
+                <span class="text-sm ${getDueDateColor(item.expected_return_date)}">
+                    ${formatDate(item.expected_return_date)}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-sm font-medium">
+                <button 
+                    onclick="returnEquipment('${item.id}')" 
+                    class="action-btn text-orange-600 hover:text-orange-900"
+                    title="Return equipment"
+                >
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    Return
+                </button>
+            </td>
+        </tr>
+    `).join('');
 }
 
-function openModal(item = null) {
-    currentEditId = item ? item.id : null;
-    const modalTitle = document.getElementById('modalTitle');
-    const submitBtn = document.getElementById('submitBtn');
+function renderOverdueItems(items) {
+    if (!overdueTable) return;
     
-    if (!modalTitle || !submitBtn || !modal || !itemForm) return;
+    if (items.length === 0) {
+        overdueTable.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                    <i class="fas fa-check-circle text-4xl mb-4 block text-green-300"></i>
+                    <p class="text-lg">No overdue items</p>
+                    <p class="text-sm">All borrowed equipment is returned on time!</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    overdueTable.innerHTML = items.map(item => `
+        <tr class="hover:bg-red-50 transition-colors bg-red-25">
+            <td class="px-6 py-4">
+                <div>
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(item.equipment_name)}</div>
+                    <div class="text-xs text-gray-500">${escapeHtml(item.equipment_rubric)}</div>
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${escapeHtml(item.borrower_name)}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div>
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(item.event_name)}</div>
+                    <div class="text-xs text-gray-500">${escapeHtml(item.event_location)}</div>
+                </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-red-600 font-medium">
+                ${formatDate(item.expected_return_date)}
+            </td>
+            <td class="px-6 py-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    ${getDaysOverdue(item.expected_return_date)} days
+                </span>
+            </td>
+            <td class="px-6 py-4 text-sm font-medium">
+                <button 
+                    onclick="returnEquipment('${item.id}')" 
+                    class="action-btn text-red-600 hover:text-red-900"
+                    title="Return overdue equipment"
+                >
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Return Now
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function populateEquipmentDropdown() {
+    const select = document.getElementById('borrowEquipment');
+    if (!select) return;
+    
+    const availableEquipment = equipment.filter(item => item.available_count > 0);
+    
+    select.innerHTML = `
+        <option value="">Select equipment to borrow</option>
+        ${availableEquipment.map(item => `
+            <option value="${item.id}">
+                ${escapeHtml(item.name)} (${item.available_count}/${item.total_count} available) - ${escapeHtml(item.rubric)}
+            </option>
+        `).join('')}
+    `;
+}
+
+function populateReturnDropdown() {
+    const select = document.getElementById('returnBorrowing');
+    if (!select) return;
+    
+    console.log('Populating return dropdown with borrowings:', borrowings.length);
+    
+    if (borrowings.length === 0) {
+        select.innerHTML = `<option value="">No items currently borrowed</option>`;
+        return;
+    }
+    
+    select.innerHTML = `
+        <option value="">Select item to return</option>
+        ${borrowings.map(item => `
+            <option value="${item.id}">
+                ${escapeHtml(item.equipment_name)} → ${escapeHtml(item.borrower_name)} (${escapeHtml(item.event_name)}) - Due: ${formatDate(item.expected_return_date)}
+            </option>
+        `).join('')}
+    `;
+}
+
+// Modal functions
+function openEquipmentModal(item = null) {
+    currentEditId = item ? item.id : null;
+    const modalTitle = document.getElementById('equipmentModalTitle');
+    const submitBtn = document.getElementById('submitEquipmentBtn');
     
     if (item) {
-        modalTitle.textContent = 'Edit Item';
-        submitBtn.textContent = 'Update Item';
-        submitBtn.className = 'px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors';
-        fillForm(item);
+        modalTitle.textContent = 'Edit Equipment';
+        submitBtn.textContent = 'Update Equipment';
+        fillEquipmentForm(item);
     } else {
-        modalTitle.textContent = 'Add New Item';
-        submitBtn.textContent = 'Add Item';
-        submitBtn.className = 'px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors';
-        itemForm.reset();
+        modalTitle.textContent = 'Add Equipment';
+        submitBtn.textContent = 'Add Equipment';
+        equipmentForm.reset();
     }
     
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    const modalContent = modal.querySelector('.bg-white');
-    if (modalContent) {
-        modalContent.classList.add('modal-enter');
-    }
-    
-    setTimeout(() => {
-        const nameInput = document.getElementById('name');
-        if (nameInput) nameInput.focus();
-    }, 100);
+    equipmentModal.classList.remove('hidden');
+    equipmentModal.classList.add('flex');
 }
 
-function closeModal() {
-    if (!modal) return;
+function closeEquipmentModal() {
+    equipmentModal.classList.add('hidden');
+    equipmentModal.classList.remove('flex');
+    currentEditId = null;
+    equipmentForm.reset();
+}
+
+function openBorrowModal() {
+    console.log('Opening borrow modal, available equipment:', equipment.filter(item => item.available_count > 0).length);
+    populateEquipmentDropdown();
+    borrowModal.classList.remove('hidden');
+    borrowModal.classList.add('flex');
+}
+
+function closeBorrowModal() {
+    borrowModal.classList.add('hidden');
+    borrowModal.classList.remove('flex');
+    borrowForm.reset();
+}
+
+function openReturnModal() {
+    console.log('Opening return modal, loading borrowings first...');
+    // Load borrowings data first, then populate dropdown
+    loadBorrowings().then(() => {
+        populateReturnDropdown();
+        returnModal.classList.remove('hidden');
+        returnModal.classList.add('flex');
+    }).catch(error => {
+        console.error('Failed to load borrowings for return modal:', error);
+        showToast('error', 'Failed to load borrowed items');
+    });
+}
+
+function closeReturnModal() {
+    returnModal.classList.add('hidden');
+    returnModal.classList.remove('flex');
+    returnForm.reset();
+}
+
+// Form handlers
+async function handleEquipmentSubmit(e) {
+    e.preventDefault();
+    const data = getFormData(equipmentForm);
     
-    const modalContent = modal.querySelector('.bg-white');
-    if (modalContent) {
-        modalContent.classList.add('modal-exit');
+    if (!validateEquipmentForm(data)) return;
+    
+    if (currentEditId) {
+        await updateEquipment(currentEditId, data);
+    } else {
+        await createEquipment(data);
+    }
+}
+
+async function handleBorrowSubmit(e) {
+    e.preventDefault();
+    const data = getFormData(borrowForm);
+    
+    if (!validateBorrowForm(data)) return;
+    
+    await borrowEquipment(data);
+}
+
+async function handleReturnSubmit(e) {
+    e.preventDefault();
+    const data = getFormData(returnForm);
+    
+    if (!data.borrowing_id) {
+        showToast('error', 'Please select an item to return');
+        return;
     }
     
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        if (modalContent) {
-            modalContent.classList.remove('modal-enter', 'modal-exit');
+    await returnEquipmentItem(data.borrowing_id, data);
+}
+
+// CRUD operations
+async function createEquipment(data) {
+    try {
+        const result = await apiCall('/equipment', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        
+        if (result.success) {
+            showToast('success', 'Equipment added successfully!');
+            await loadData();
+            closeEquipmentModal();
+        } else {
+            showToast('error', result.error || 'Failed to add equipment');
         }
-        currentEditId = null;
-        if (itemForm) itemForm.reset();
-    }, 200);
-}
-
-function openDeleteModal(id, name) {
-    const confirmDeleteBtn = document.getElementById('confirmDelete');
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.setAttribute('data-id', id);
-    }
-    
-    if (!deleteModal) return;
-    
-    const modalContent = deleteModal.querySelector('.bg-white');
-    deleteModal.classList.remove('hidden');
-    deleteModal.classList.add('flex');
-    if (modalContent) {
-        modalContent.classList.add('modal-enter');
+    } catch (error) {
+        console.error('Failed to create equipment:', error);
     }
 }
 
-function closeDeleteModal() {
-    if (!deleteModal) return;
-    
-    const modalContent = deleteModal.querySelector('.bg-white');
-    if (modalContent) {
-        modalContent.classList.add('modal-exit');
-    }
-    
-    setTimeout(() => {
-        deleteModal.classList.add('hidden');
-        deleteModal.classList.remove('flex');
-        if (modalContent) {
-            modalContent.classList.remove('modal-enter', 'modal-exit');
+async function updateEquipment(id, data) {
+    try {
+        const result = await apiCall(`/equipment/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+        
+        if (result.success) {
+            showToast('success', 'Equipment updated successfully!');
+            await loadData();
+            closeEquipmentModal();
+        } else {
+            showToast('error', result.error || 'Failed to update equipment');
         }
-    }, 200);
+    } catch (error) {
+        console.error('Failed to update equipment:', error);
+    }
 }
 
-function fillForm(item) {
-    const setValue = (id, value) => {
-        const element = document.getElementById(id);
-        if (element && value !== undefined && value !== null) {
-            element.value = value.toString();
+async function borrowEquipment(data) {
+    try {
+        const result = await apiCall('/borrowings', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        
+        if (result.success) {
+            showToast('success', 'Equipment borrowed successfully!');
+            await loadData();
+            if (currentView === 'borrowings') await loadBorrowings();
+            closeBorrowModal();
+        } else {
+            showToast('error', result.error || 'Failed to borrow equipment');
         }
-    };
-    
-    setValue('name', item.name);
-    setValue('sku', item.sku);
-    setValue('description', item.description);
-    setValue('quantity', item.quantity);
-    setValue('price', item.price);
-    setValue('category', item.category);
-    setValue('location', item.location);
-    setValue('supplier', item.supplier);
+    } catch (error) {
+        console.error('Failed to borrow equipment:', error);
+    }
 }
 
-function getFormData() {
-    if (!itemForm) return {};
-    
-    const formData = new FormData(itemForm);
+async function returnEquipmentItem(borrowingId, data) {
+    try {
+        const result = await apiCall(`/borrowings/${borrowingId}/return`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+        
+        if (result.success) {
+            showToast('success', 'Equipment returned successfully!');
+            await loadData();
+            if (currentView === 'borrowings') await loadBorrowings();
+            if (currentView === 'overdue') await loadOverdueItems();
+            closeReturnModal();
+        } else {
+            showToast('error', result.error || 'Failed to return equipment');
+        }
+    } catch (error) {
+        console.error('Failed to return equipment:', error);
+    }
+}
+
+// Utility functions
+function fillEquipmentForm(item) {
+    document.getElementById('equipmentName').value = item.name || '';
+    document.getElementById('equipmentDescription').value = item.description || '';
+    document.getElementById('totalCount').value = item.total_count || '';
+    document.getElementById('storageArea').value = item.storage_area || '';
+    document.getElementById('rubric').value = item.rubric || '';
+}
+
+function getFormData(form) {
+    const formData = new FormData(form);
     const data = {};
     
     for (const [key, value] of formData.entries()) {
-        if (typeof value === 'string') {
-            const stringValue = value.trim();
-            if (stringValue !== '') {
-                if (key === 'quantity') {
-                    data[key] = parseInt(stringValue);
-                } else if (key === 'price') {
-                    data[key] = parseFloat(stringValue);
-                } else {
-                    data[key] = stringValue;
-                }
+        if (typeof value === 'string' && value.trim() !== '') {
+            if (key === 'total_count') {
+                data[key] = parseInt(value);
+            } else {
+                data[key] = value.trim();
             }
         }
     }
@@ -426,32 +632,74 @@ function getFormData() {
     return data;
 }
 
-function validateForm(data) {
-    const required = ['name', 'quantity', 'location', 'category'];
+function validateEquipmentForm(data) {
+    const required = ['name', 'total_count', 'storage_area', 'rubric'];
     const missing = required.filter(field => !data[field]);
     
     if (missing.length > 0) {
-        showToast('error', `Please fill in required fields: ${missing.join(', ')}`);
+        showToast('error', `Please fill in: ${missing.join(', ')}`);
         return false;
     }
     
-    if (data.quantity !== undefined && data.quantity < 0) {
-        showToast('error', 'Quantity cannot be negative');
-        return false;
-    }
-    
-    if (data.price !== undefined && data.price < 0) {
-        showToast('error', 'Price cannot be negative');
+    if (data.total_count < 1) {
+        showToast('error', 'Total count must be at least 1');
         return false;
     }
     
     return true;
 }
 
-function getQuantityBadgeClass(quantity) {
-    if (quantity === 0) return 'badge-out-of-stock bg-red-100 text-red-800';
-    if (quantity < 10) return 'badge-low-stock bg-yellow-100 text-yellow-800';
-    return 'badge-in-stock bg-green-100 text-green-800';
+function validateBorrowForm(data) {
+    const required = ['equipment_id', 'borrower_name', 'event_name', 'event_location', 'borrowing_date', 'expected_return_date'];
+    const missing = required.filter(field => !data[field]);
+    
+    if (missing.length > 0) {
+        showToast('error', `Please fill in: ${missing.join(', ')}`);
+        return false;
+    }
+    
+    if (new Date(data.expected_return_date) <= new Date(data.borrowing_date)) {
+        showToast('error', 'Return date must be after borrowing date');
+        return false;
+    }
+    
+    return true;
+}
+
+function updateDashboardStats(stats) {
+    document.getElementById('totalEquipment').textContent = stats.total_equipment_types || 0;
+    document.getElementById('availableItems').textContent = stats.available_items || 0;
+    document.getElementById('borrowedItems').textContent = stats.borrowed_items || 0;
+    document.getElementById('overdueItems').textContent = stats.overdue_borrowings || 0;
+    document.getElementById('activeEvents').textContent = stats.active_borrowings || 0;
+    document.getElementById('totalItems').textContent = stats.total_items || 0;
+}
+
+function getAvailabilityColor(item) {
+    const ratio = item.available_count / item.total_count;
+    if (ratio === 0) return 'text-red-600';
+    if (ratio < 0.5) return 'text-yellow-600';
+    return 'text-green-600';
+}
+
+function getDueDateColor(dueDate) {
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'text-red-600 font-medium';
+    if (diffDays <= 2) return 'text-yellow-600 font-medium';
+    return 'text-gray-900';
+}
+
+function getDaysOverdue(dueDate) {
+    const today = new Date();
+    const due = new Date(dueDate);
+    return Math.ceil((today - due) / (1000 * 60 * 60 * 24));
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
 }
 
 function escapeHtml(text) {
@@ -478,132 +726,83 @@ function hideLoading() {
 function showToast(type, message) {
     const toastIcon = document.getElementById('toastIcon');
     const toastMessage = document.getElementById('toastMessage');
-    const toastElement = toast ? toast.querySelector('div') : null;
     
-    if (!toastIcon || !toastMessage || !toastElement || !toast) return;
+    if (!toastIcon || !toastMessage || !toast) return;
     
-    const iconConfigs = {
-        success: {
-            icon: '<i class="fas fa-check-circle text-green-500"></i>',
-            className: 'bg-white border-l-4 border-green-500 rounded-lg shadow-lg p-4 max-w-sm'
-        },
-        error: {
-            icon: '<i class="fas fa-exclamation-circle text-red-500"></i>',
-            className: 'bg-white border-l-4 border-red-500 rounded-lg shadow-lg p-4 max-w-sm'
-        },
-        warning: {
-            icon: '<i class="fas fa-exclamation-triangle text-yellow-500"></i>',
-            className: 'bg-white border-l-4 border-yellow-500 rounded-lg shadow-lg p-4 max-w-sm'
-        },
-        info: {
-            icon: '<i class="fas fa-info-circle text-blue-500"></i>',
-            className: 'bg-white border-l-4 border-blue-500 rounded-lg shadow-lg p-4 max-w-sm'
-        }
-    };
+    if (type === 'success') {
+        toastIcon.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
+    } else {
+        toastIcon.innerHTML = '<i class="fas fa-exclamation-circle text-red-500"></i>';
+    }
     
-    const config = iconConfigs[type];
-    toastIcon.innerHTML = config.icon;
-    toastElement.className = config.className;
     toastMessage.textContent = message;
-    
     toast.classList.remove('hidden');
-    toastElement.classList.add('toast-enter');
     
-    setTimeout(() => {
-        hideToast();
-    }, 5000);
+    setTimeout(() => hideToast(), 5000);
 }
 
 function hideToast() {
-    if (!toast) return;
-    
-    const toastElement = toast.querySelector('div');
-    if (toastElement) {
-        toastElement.classList.add('toast-exit');
-        
-        setTimeout(() => {
-            toast.classList.add('hidden');
-            toastElement.classList.remove('toast-enter', 'toast-exit');
-        }, 200);
-    }
-}
-
-// Event handlers
-async function handleFormSubmit(e) {
-    e.preventDefault();
-    console.log('Form submitted');
-    
-    const data = getFormData();
-    console.log('Form data:', data);
-    
-    if (!validateForm(data)) {
-        return;
-    }
-    
-    if (currentEditId) {
-        await updateItem(currentEditId, data);
-    } else {
-        await createItem(data);
+    if (toast) {
+        toast.classList.add('hidden');
     }
 }
 
 function handleSearch(e) {
     const query = e.target.value;
-    
-    if (searchTimeout) {
-        clearTimeout(searchTimeout);
-    }
-    
-    searchTimeout = setTimeout(() => {
-        if (query.length > 2 || query.length === 0) {
-            searchItems(query);
-        }
-    }, 300);
+    // Implement search functionality based on current view
+    console.log('Search:', query);
 }
 
-async function handleConfirmDelete() {
-    const confirmDeleteBtn = document.getElementById('confirmDelete');
-    const id = confirmDeleteBtn ? confirmDeleteBtn.getAttribute('data-id') : null;
-    if (id) {
-        await deleteItem(id);
-        closeDeleteModal();
-    }
-}
-
-// Global functions for inline event handlers
-window.editItem = async function(id) {
-    const item = inventoryItems.find(item => item.id === id);
+// Global functions for onclick handlers
+window.editEquipment = function(id) {
+    const item = equipment.find(e => e.id === id);
     if (item) {
-        openModal(item);
-    } else {
-        try {
-            const result = await apiCall(`/inventory/${id}`);
-            if (result.success && result.data) {
-                openModal(result.data);
-            }
-        } catch (error) {
-            showToast('error', 'Failed to load item details');
-        }
+        openEquipmentModal(item);
     }
 };
 
-window.openDeleteModal = function(id, name) {
-    openDeleteModal(id, name);
+window.deleteEquipment = function(id, name) {
+    if (confirm(`Are you sure you want to delete "${name}"?`)) {
+        deleteEquipmentItem(id);
+    }
 };
 
-window.confirmDelete = async function() {
-    await handleConfirmDelete();
+window.quickBorrow = function(equipmentId) {
+    const equipmentSelect = document.getElementById('borrowEquipment');
+    if (equipmentSelect) {
+        equipmentSelect.value = equipmentId;
+    }
+    openBorrowModal();
 };
 
-// Error handling
-window.addEventListener('error', function(e) {
-    console.error('Global error:', e.error);
-    showToast('error', 'An unexpected error occurred');
-});
+window.returnEquipment = function(borrowingId) {
+    // Load borrowings first, then open modal with pre-selection
+    loadBorrowings().then(() => {
+        populateReturnDropdown();
+        const returnSelect = document.getElementById('returnBorrowing');
+        if (returnSelect) {
+            returnSelect.value = borrowingId;
+        }
+        returnModal.classList.remove('hidden');
+        returnModal.classList.add('flex');
+    });
+};
 
-window.addEventListener('unhandledrejection', function(e) {
-    console.error('Unhandled promise rejection:', e.reason);
-    showToast('error', 'A network error occurred');
-});
+async function deleteEquipmentItem(id) {
+    try {
+        const result = await apiCall(`/equipment/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (result.success) {
+            showToast('success', 'Equipment deleted successfully!');
+            await loadData();
+        } else {
+            showToast('error', result.error || 'Failed to delete equipment');
+        }
+    } catch (error) {
+        console.error('Failed to delete equipment:', error);
+    }
+}
 
-console.log('App.js loaded successfully');
+console.log('Equipment Borrowing System loaded successfully!');

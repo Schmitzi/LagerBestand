@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Tracker</title>
+    <title>Equipment Borrowing System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
@@ -15,38 +14,105 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center">
-                    <i class="fas fa-boxes text-blue-600 text-2xl mr-3"></i>
-                    <h1 class="text-2xl font-bold text-gray-900">Inventory Tracker</h1>
+                    <i class="fas fa-video text-blue-600 text-2xl mr-3"></i>
+                    <h1 class="text-2xl font-bold text-gray-900">Equipment Borrowing System</h1>
                 </div>
-                <button id="addItemBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                    <i class="fas fa-plus"></i>
-                    Add Item
-                </button>
+                <div class="flex space-x-3">
+                    <button id="addEquipmentBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                        <i class="fas fa-plus"></i>
+                        Add Equipment
+                    </button>
+                    <button id="borrowBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                        <i class="fas fa-arrow-right"></i>
+                        Borrow Item
+                    </button>
+                    <button id="returnBtn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                        <i class="fas fa-arrow-left"></i>
+                        Return Item
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Search Bar -->
-        <div class="mb-6">
-            <div class="relative">
-                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="Search inventory by name, description, category, or location..."
-                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-            </div>
+    <!-- Navigation Tabs -->
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex space-x-8">
+            <button id="equipmentTab" class="tab-btn active border-b-2 border-blue-600 text-blue-600 pb-2 px-1 font-medium">
+                Equipment
+            </button>
+            <button id="borrowingsTab" class="tab-btn text-gray-500 hover:text-gray-700 pb-2 px-1 font-medium">
+                Current Borrowings
+            </button>
+            <button id="overdueTab" class="tab-btn text-gray-500 hover:text-gray-700 pb-2 px-1 font-medium">
+                Overdue Items
+            </button>
         </div>
+    </nav>
 
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
             <div class="bg-white p-6 rounded-lg shadow-sm border">
                 <div class="flex items-center">
                     <div class="p-2 bg-blue-100 rounded-lg">
                         <i class="fas fa-boxes text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Equipment Types</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalEquipment">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Available</p>
+                        <p class="text-2xl font-bold text-gray-900" id="availableItems">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-arrow-right text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Borrowed</p>
+                        <p class="text-2xl font-bold text-gray-900" id="borrowedItems">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex items-center">
+                    <div class="p-2 bg-red-100 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Overdue</p>
+                        <p class="text-2xl font-bold text-gray-900" id="overdueItems">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <i class="fas fa-calendar text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Events</p>
+                        <p class="text-2xl font-bold text-gray-900" id="activeEvents">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex items-center">
+                    <div class="p-2 bg-indigo-100 rounded-lg">
+                        <i class="fas fa-warehouse text-indigo-600"></i>
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Total Items</p>
@@ -54,154 +120,269 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <div class="flex items-center">
-                    <div class="p-2 bg-green-100 rounded-lg">
-                        <i class="fas fa-chart-line text-green-600"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Quantity</p>
-                        <p class="text-2xl font-bold text-gray-900" id="totalQuantity">0</p>
-                    </div>
-                </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-6">
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search equipment by name, description, category, or storage area..."
+                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
             </div>
-            <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <div class="flex items-center">
-                    <div class="p-2 bg-yellow-100 rounded-lg">
-                        <i class="fas fa-tags text-yellow-600"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Categories</p>
-                        <p class="text-2xl font-bold text-gray-900" id="totalCategories">0</p>
-                    </div>
+        </div>
+
+        <!-- Content Sections -->
+        
+        <!-- Equipment Table -->
+        <div id="equipmentSection" class="content-section">
+            <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Equipment Inventory</h2>
                 </div>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-sm border">
-                <div class="flex items-center">
-                    <div class="p-2 bg-purple-100 rounded-lg">
-                        <i class="fas fa-map-marker-alt text-purple-600"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Locations</p>
-                        <p class="text-2xl font-bold text-gray-900" id="totalLocations">0</p>
-                    </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Equipment</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Availability</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Storage Area</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipmentTable" class="bg-white divide-y divide-gray-200">
+                            <!-- Equipment will be loaded here -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Inventory Table -->
-        <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Inventory Items</h2>
+        <!-- Current Borrowings Table -->
+        <div id="borrowingsSection" class="content-section hidden">
+            <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Current Borrowings</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Equipment</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Borrower</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Borrowed</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Back</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="borrowingsTable" class="bg-white divide-y divide-gray-200">
+                            <!-- Borrowings will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventoryTable" class="bg-white divide-y divide-gray-200">
-                        <!-- Items will be loaded here -->
-                    </tbody>
-                </table>
+        </div>
+
+        <!-- Overdue Items Table -->
+        <div id="overdueSection" class="content-section hidden">
+            <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+                    <h2 class="text-lg font-semibold text-red-900">Overdue Items</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-red-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Equipment</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Borrower</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Event</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Due Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Days Overdue</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="overdueTable" class="bg-white divide-y divide-gray-200">
+                            <!-- Overdue items will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- Add/Edit Modal -->
-    <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <!-- Add Equipment Modal -->
+    <div id="equipmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-2xl w-full max-h-screen overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h3 id="modalTitle" class="text-lg font-semibold text-gray-900">Add New Item</h3>
-                <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                <h3 id="equipmentModalTitle" class="text-lg font-semibold text-gray-900">Add Equipment</h3>
+                <button id="closeEquipmentModal" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
             
-            <form id="itemForm" class="space-y-4">
+            <form id="equipmentForm" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                        <input type="text" id="name" name="name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label for="equipmentName" class="block text-sm font-medium text-gray-700 mb-1">Equipment Name *</label>
+                        <input type="text" id="equipmentName" name="name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     <div>
-                        <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">SKU</label>
-                        <input type="text" id="sku" name="sku" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label for="totalCount" class="block text-sm font-medium text-gray-700 mb-1">Total Count *</label>
+                        <input type="number" id="totalCount" name="total_count" required min="1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                 </div>
                 
                 <div>
-                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea id="description" name="description" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
-                        <input type="number" id="quantity" name="quantity" required min="0" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                        <input type="number" id="price" name="price" step="0.01" min="0" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                        <input type="text" id="category" name="category" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
+                    <label for="equipmentDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="equipmentDescription" name="description" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location *</label>
-                        <input type="text" id="location" name="location" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label for="storageArea" class="block text-sm font-medium text-gray-700 mb-1">Storage Area *</label>
+                        <input type="text" id="storageArea" name="storage_area" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Room A-1">
                     </div>
                     <div>
-                        <label for="supplier" class="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
-                        <input type="text" id="supplier" name="supplier" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <label for="rubric" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                        <select id="rubric" name="rubric" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Select category</option>
+                            <option value="Projectors">Projectors</option>
+                            <option value="Cables">Cables</option>
+                            <option value="Monitors">Monitors</option>
+                            <option value="Audio">Audio Equipment</option>
+                            <option value="Cameras">Cameras</option>
+                            <option value="Lighting">Lighting</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                 </div>
                 
                 <div class="flex justify-end space-x-3 pt-6">
-                    <button type="button" id="cancelBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <button type="button" id="cancelEquipmentBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                         Cancel
                     </button>
-                    <button type="submit" id="submitBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                        Add Item
+                    <button type="submit" id="submitEquipmentBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                        Add Equipment
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-md w-full">
-            <div class="flex items-center mb-4">
-                <div class="p-2 bg-red-100 rounded-full mr-3">
-                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+    <!-- Borrow Equipment Modal -->
+    <div id="borrowModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Borrow Equipment</h3>
+                <button id="closeBorrowModal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="borrowForm" class="space-y-4">
+                <div>
+                    <label for="borrowEquipment" class="block text-sm font-medium text-gray-700 mb-1">Equipment *</label>
+                    <select id="borrowEquipment" name="equipment_id" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select equipment to borrow</option>
+                    </select>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900">Delete Item</h3>
-            </div>
-            <p class="text-gray-600 mb-6">Are you sure you want to delete this item? This action cannot be undone.</p>
-            <div class="flex justify-end space-x-3">
-                <button id="cancelDelete" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                    Cancel
-                </button>
-                <button id="confirmDelete" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
-                    Delete
-                </button>
-            </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="borrowerName" class="block text-sm font-medium text-gray-700 mb-1">Borrower Name *</label>
+                        <input type="text" id="borrowerName" name="borrower_name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="eventName" class="block text-sm font-medium text-gray-700 mb-1">Event Name *</label>
+                        <input type="text" id="eventName" name="event_name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="eventLocation" class="block text-sm font-medium text-gray-700 mb-1">Event Location *</label>
+                    <input type="text" id="eventLocation" name="event_location" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="borrowingDate" class="block text-sm font-medium text-gray-700 mb-1">Borrowing Date *</label>
+                        <input type="date" id="borrowingDate" name="borrowing_date" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="expectedReturnDate" class="block text-sm font-medium text-gray-700 mb-1">Expected Return Date *</label>
+                        <input type="date" id="expectedReturnDate" name="expected_return_date" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="borrowNotes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea id="borrowNotes" name="notes" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Any additional notes..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-6">
+                    <button type="button" id="cancelBorrowBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                        Borrow Equipment
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Loading Spinner -->
+    <!-- Return Equipment Modal -->
+    <div id="returnModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Return Equipment</h3>
+                <button id="closeReturnModal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="returnForm" class="space-y-4">
+                <div>
+                    <label for="returnBorrowing" class="block text-sm font-medium text-gray-700 mb-1">Select Borrowing to Return *</label>
+                    <select id="returnBorrowing" name="borrowing_id" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select item to return</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="returnerName" class="block text-sm font-medium text-gray-700 mb-1">Returned By *</label>
+                        <input type="text" id="returnerName" name="returner_name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="actualReturnDate" class="block text-sm font-medium text-gray-700 mb-1">Return Date *</label>
+                        <input type="date" id="actualReturnDate" name="actual_return_date" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="returnNotes" class="block text-sm font-medium text-gray-700 mb-1">Return Notes</label>
+                    <textarea id="returnNotes" name="notes" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Condition notes, damages, etc..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-6">
+                    <button type="button" id="cancelReturnBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors">
+                        Return Equipment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading, Toast, and Delete modals (same as before) -->
     <div id="loading" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6">
             <div class="flex items-center">
@@ -211,7 +392,6 @@
         </div>
     </div>
 
-    <!-- Toast Notifications -->
     <div id="toast" class="fixed top-4 right-4 z-50 hidden">
         <div class="bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
             <div class="flex items-center">
