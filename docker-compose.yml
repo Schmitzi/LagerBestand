@@ -1,0 +1,15 @@
+services:
+  inventory-app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - inventory_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - DB_PATH=/app/data/inventory.db
+    restart: unless-stopped
+
+volumes:
+  inventory_data:
