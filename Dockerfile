@@ -1,17 +1,24 @@
 FROM node:18-alpine
 
+# Install sharp dependencies for Alpine Linux
+RUN apk add --no-cache \
+    libc6-compat \
+    vips-dev
+
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
 # Install all dependencies
-RUN npm ci
+RUN npm install
 
-# Copy source code
-COPY . .
+# Copy source code and frontend files
+COPY src/ ./src/
+COPY public/ ./public/
+COPY tsconfig.json ./
 
-# Build backend and frontend
+# Build backend
 RUN npm run build
 
 # Remove dev dependencies to reduce image size

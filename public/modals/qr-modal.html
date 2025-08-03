@@ -1,0 +1,18 @@
+<!-- QR Scanner Modal -->
+<div id="qr-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-[60]">
+    <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-md w-full">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Scan QR Code</h3>
+            <button id="qr-close" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="text-center">
+            <video id="qr-video" class="w-full max-w-sm mx-auto border-2 border-gray-300 rounded-lg mb-4"></video>
+            <div id="qr-result" class="text-sm text-gray-600 min-h-[40px] p-2"></div>
+            <div class="text-xs text-gray-500 mt-2">
+                Point your camera at a QR code to scan
+            </div>
+        </div>
+    </div>
+</div>

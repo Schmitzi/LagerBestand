@@ -1,0 +1,45 @@
+<!-- Return Equipment Modal -->
+<div id="returnModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Return Equipment</h3>
+            <button id="closeReturnModal" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form id="returnForm" class="space-y-4">
+            <div>
+                <label for="returnBorrowing" class="block text-sm font-medium text-gray-700 mb-1">Select Borrowing to Return *</label>
+                <select id="returnBorrowing" name="borrowing_id" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Select item to return</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="returnerName" class="block text-sm font-medium text-gray-700 mb-1">Returned By *</label>
+                    <input type="text" id="returnerName" name="returner_name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label for="actualReturnDate" class="block text-sm font-medium text-gray-700 mb-1">Return Date *</label>
+                    <input type="date" id="actualReturnDate" name="actual_return_date" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+
+            <div>
+                <label for="returnNotes" class="block text-sm font-medium text-gray-700 mb-1">Return Notes</label>
+                <textarea id="returnNotes" name="notes" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Condition notes, damages, etc..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-6">
+                <button type="button" id="cancelReturnBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors">
+                    Return Equipment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

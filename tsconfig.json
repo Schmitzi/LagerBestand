@@ -14,6 +14,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*", "public/app.js"],
+  "include": ["src/**/*", "public/js/main.js"],
   "exclude": ["node_modules", "dist"]
 }

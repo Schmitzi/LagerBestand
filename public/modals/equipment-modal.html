@@ -1,0 +1,58 @@
+<!-- Add Equipment Modal -->
+<div id="equipmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 id="equipmentModalTitle" class="text-lg font-semibold text-gray-900">Add Equipment</h3>
+            <button id="closeEquipmentModal" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form id="equipmentForm" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="equipmentName" class="block text-sm font-medium text-gray-700 mb-1">Equipment Name *</label>
+                    <input type="text" id="equipmentName" name="name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label for="totalCount" class="block text-sm font-medium text-gray-700 mb-1">Total Count *</label>
+                    <input type="number" id="totalCount" name="total_count" required min="1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+            
+            <div>
+                <label for="equipmentDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea id="equipmentDescription" name="description" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="storageArea" class="block text-sm font-medium text-gray-700 mb-1">Storage Area *</label>
+                    <input type="text" id="storageArea" name="storage_area" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Room A-1">
+                </div>
+                <div>
+                    <label for="rubric" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                    <select id="rubric" name="rubric" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select category</option>
+                        <option value="Projectors">Projectors</option>
+                        <option value="Cables">Cables</option>
+                        <option value="Monitors">Monitors</option>
+                        <option value="Audio">Audio Equipment</option>
+                        <option value="Cameras">Cameras</option>
+                        <option value="Lighting">Lighting</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-6">
+                <button type="button" id="cancelEquipmentBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" id="submitEquipmentBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                    Add Equipment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

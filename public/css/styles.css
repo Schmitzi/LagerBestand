@@ -310,3 +310,59 @@ textarea:focus-visible {
         box-shadow: none !important;
     }
 }
+
+/* QR Code Scanner */
+
+.qr-modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.qr-modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.qr-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.qr-close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.qr-close:hover {
+    color: #000;
+}
+
+.qr-modal-body {
+    text-align: center;
+}
+
+#qr-video {
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+#qr-result {
+    margin-top: 10px;
+    padding: 10px;
+    min-height: 20px;
+}

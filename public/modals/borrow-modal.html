@@ -1,0 +1,67 @@
+<!-- Borrow Equipment Modal -->
+<div id="borrowModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Borrow Equipment</h3>
+            <button id="closeBorrowModal" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form id="borrowForm" class="space-y-4">
+            <div>
+                <label for="borrowEquipment" class="block text-sm font-medium text-gray-700 mb-1">Equipment *</label>
+                <div class="flex gap-2">
+                    <select id="borrowEquipment" name="equipment_id" required class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select equipment to borrow</option>
+                    </select>
+                    <button type="button" id="scan-qr-btn" class="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2">
+                        <i class="fas fa-qrcode"></i>
+                        Scan QR
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="borrowerName" class="block text-sm font-medium text-gray-700 mb-1">Borrower Name *</label>
+                    <input type="text" id="borrowerName" name="borrower_name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label for="eventName" class="block text-sm font-medium text-gray-700 mb-1">Event Name *</label>
+                    <input type="text" id="eventName" name="event_name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+
+            <div>
+                <label for="eventLocation" class="block text-sm font-medium text-gray-700 mb-1">Event Location *</label>
+                <input type="text" id="eventLocation" name="event_location" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="borrowingDate" class="block text-sm font-medium text-gray-700 mb-1">Borrowing Date *</label>
+                    <input type="date" id="borrowingDate" name="borrowing_date" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label for="expectedReturnDate" class="block text-sm font-medium text-gray-700 mb-1">Expected Return Date *</label>
+                    <input type="date" id="expectedReturnDate" name="expected_return_date" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+
+            <div>
+                <label for="borrowNotes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea id="borrowNotes" name="notes" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Any additional notes..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-6">
+                <button type="button" id="cancelBorrowBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                    Borrow Equipment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
