@@ -146,11 +146,10 @@ export function validateEventsForm(data) {
         return false;
     }
     
-    if (data.begin_date && data.end_date) {
-        if (new Date(data.end_date) < new Date(data.begin_date)) {
-            showToast('error', 'End date must be after begin date');
-            return false;
-        }
+    // Validate dates
+    if (new Date(data.end_date) <= new Date(data.begin_date)) {
+        showToast('error', 'End date must be after begin date');
+        return false;
     }
     
     return true;

@@ -388,7 +388,7 @@ function updateDashboardStats(stats) {
     document.getElementById('availableItems').textContent = stats.available_items || 0;
     document.getElementById('borrowedItems').textContent = stats.borrowed_items || 0;
     document.getElementById('overdueItems').textContent = stats.overdue_borrowings || 0;
-    document.getElementById('activeEvents').textContent = stats.active_borrowings || 0;
+    document.getElementById('activeEvents').textContent = stats.active_events || 0;
     document.getElementById('totalItems').textContent = stats.total_items || 0;
 }
 

@@ -110,6 +110,8 @@ class Database {
         WHERE id = NEW.equipment_id;
       END;
     `);
+
+    //TODO: create trigger for events
   }
 
   async all(sql: string, params: any[] = []): Promise<any[]> {
