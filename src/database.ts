@@ -53,7 +53,9 @@ class Database {
         notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (equipment_id) REFERENCES equipment (id)
+        FOREIGN KEY (equipment_id) REFERENCES equipment (id),
+        FOREIGN KEY (event_name) REFERENCES events (name),
+        FOREIGN KEY (event_location) REFERENCES events (location)
       )
     `);
 

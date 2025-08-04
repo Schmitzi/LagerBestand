@@ -1,8 +1,10 @@
+// js/events-modal.js
 import { 
     getFormData, 
     validateEventsForm, 
     createEvent, 
-    updateEvent 
+    updateEvent,
+    deleteEvent
 } from './utils.js';
 
 let eventsModal, eventsForm;
@@ -17,7 +19,7 @@ function setupEventListeners() {
 
     // Close modal event listeners
     document.getElementById('closeEventsModal')?.addEventListener('click', closeModal);
-    document.getElementById('cancelEventsBtn')?.addEventListener('click', closeModal);
+    document.getElementById('cancelEventBtn')?.addEventListener('click', closeModal);
 
     // Close modal when clicking outside
     eventsModal.addEventListener('click', (event) => {
@@ -62,6 +64,7 @@ export function openModal(item = null) {
         modalTitle.textContent = 'Add Event';
         submitBtn.textContent = 'Add Event';
         eventsForm?.reset();
+        setDefaultDates();
     }
     
     eventsModal.classList.remove('hidden');
@@ -95,6 +98,21 @@ export function closeModal() {
     if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'Add Event';
+    }
+}
+
+function setDefaultDates() {
+    const today = new Date().toISOString().split('T')[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const beginDateInput = document.getElementById('beginDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    if (beginDateInput && !beginDateInput.value) {
+        beginDateInput.value = today;
+    }
+    if (endDateInput && !endDateInput.value) {
+        endDateInput.value = nextWeek;
     }
 }
 
@@ -141,10 +159,13 @@ function fillEventsForm(item) {
     if (!item || !eventsForm) return;
     
     // Use the correct IDs that match the HTML
-    document.getElementById('eventsName').value = item.name || '';
-    document.getElementById('eventsDescription')?.value = item.description || '';
-    document.getElementById('eventsId').value = item.event_id || '';
-    document.getElementById('eventsLocation').value = item.location || '';
+    document.getElementById('eventName').value = item.name || '';
+    document.getElementById('eventDescription')?.value = item.description || '';
+    document.getElementById('eventId').value = item.event_id || '';
+    document.getElementById('location').value = item.location || '';
+    document.getElementById('managedBy')?.value = item.managed_by || '';
+    document.getElementById('beginDate')?.value = item.begin_date || '';
+    document.getElementById('endDate')?.value = item.end_date || '';
 }
 
 console.log('✅ Events modal module loaded');

@@ -114,8 +114,19 @@ export function validateBorrowForm(data) {
     const missing = required.filter(field => !data[field]);
     
     if (missing.length > 0) {
-        showToast('error', `Please fill in: ${missing.join(', ')}`);
-        return false;
+        // Special handling for event selection
+        const eventSelect = document.getElementById('eventSelect');
+        const eventNameField = document.getElementById('eventName');
+        
+        if (!data.event_name && eventSelect && !eventSelect.value) {
+            showToast('error', 'Please select an event or create a new one');
+            return false;
+        }
+        
+        if (missing.length > 0) {
+            showToast('error', `Please fill in: ${missing.join(', ')}`);
+            return false;
+        }
     }
     
     if (new Date(data.expected_return_date) <= new Date(data.borrowing_date)) {
@@ -127,12 +138,19 @@ export function validateBorrowForm(data) {
 }
 
 export function validateEventsForm(data) {
-    const required = ['name', 'event_id', 'location'];
+    const required = ['name', 'event_id', 'location', 'begin_date', 'end_date'];
     const missing = required.filter(field => !data[field]);
     
     if (missing.length > 0) {
         showToast('error', `Please fill in: ${missing.join(', ')}`);
         return false;
+    }
+    
+    if (data.begin_date && data.end_date) {
+        if (new Date(data.end_date) < new Date(data.begin_date)) {
+            showToast('error', 'End date must be after begin date');
+            return false;
+        }
     }
     
     return true;

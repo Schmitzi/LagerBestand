@@ -56,7 +56,7 @@ export async function loadEventItems() {
         console.log('Loading events...');
         const result = await apiCall('/events');
         window.appState.events = result.data || [];
-        console.log(`✅ Loaded ${window.appState.overdueItems.length} events`);
+        console.log(`✅ Loaded ${window.appState.events.length} events`);
         renderEvents(window.appState.events);
     } catch (error) {
         console.error('Failed to load events:', error);
@@ -293,9 +293,9 @@ function renderEvents(items) {
         eventsTable.innerHTML = `
             <tr>
                 <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                    <i class="fas fa-check-circle text-4xl mb-4 block text-green-300"></i>
+                    <i class="fas fa-calendar text-4xl mb-4 block text-gray-300"></i>
                     <p class="text-lg">No events</p>
-                    <p class="text-sm">All events have finished</p>
+                    <p class="text-sm">Add your first event to get started</p>
                 </td>
             </tr>
         `;
@@ -303,34 +303,42 @@ function renderEvents(items) {
     }
     
     eventsTable.innerHTML = items.map(item => `
-        <tr class="hover:bg-red-50 transition-colors bg-red-25">
+        <tr class="hover:bg-gray-50 transition-colors">
             <td class="px-6 py-4">
                 <div>
                     <div class="text-sm font-medium text-gray-900">${escapeHtml(item.name)}</div>
-                    <div class="text-xs text-gray-500">${escapeHtml(item.event_id)}</div>
+                    <div class="text-xs text-gray-500">ID: ${escapeHtml(item.event_id)}</div>
                 </div>
             </td>
             <td class="px-6 py-4">
-                <div class="text-sm text-gray-900">${escapeHtml(item.managed_by)}</div>
+                <div class="text-sm text-gray-900">${escapeHtml(item.managed_by || 'System')}</div>
             </td>
             <td class="px-6 py-4">
-                <div>
-                    <div class="text-sm font-medium text-gray-900">${escapeHtml(item.event_name)}</div>
-                    <div class="text-xs text-gray-500">${escapeHtml(item.location)}</div>
-                </div>
+                <div class="text-sm text-gray-900">${escapeHtml(item.event_id)}</div>
             </td>
-            <td class="px-6 py-4 text-sm text-red-600 font-medium">
-                ${formatDate(item.expected_return_date)}
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${formatDate(item.begin_date)}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${formatDate(item.end_date)}</div>
             </td>
             <td class="px-6 py-4 text-sm font-medium">
-                <button 
-                    onclick="deleteEvent('${item.id}')" 
-                    class="action-btn text-red-600 hover:text-red-900"
-                    title="Delete Event"
-                >
-                    <i class="fas fa-trash"></i>
-                    Delete Event
-                </button>
+                <div class="flex space-x-2">
+                    <button 
+                        onclick="editEvent('${item.id}')" 
+                        class="action-btn text-blue-600 hover:text-blue-900"
+                        title="Edit event"
+                    >
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button 
+                        onclick="deleteEvent('${item.id}', '${escapeHtml(item.name)}')" 
+                        class="action-btn text-red-600 hover:text-red-900"
+                        title="Delete event"
+                    >
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </td>
         </tr>
     `).join('');
@@ -395,7 +403,7 @@ export function handleSearch(query) {
         } else if (window.appState.currentView === 'overdue') {
             renderOverdueItems(window.appState.overdueItems);
         } else if (window.appState.currentView === 'events') {
-            renderEvents(window.currentView.events);
+            renderEvents(window.appState.events);
         }
         return;
     }
@@ -427,10 +435,11 @@ export function handleSearch(query) {
         );
         renderOverdueItems(filtered);
     } else if (window.appState.currentView === 'events') {
-        const filtered = window.appState.overdueItems.filter(item =>
-            item.event_name.toLowerCase().includes(lowerQuery) ||
-            item.managed_by.toLowerCase().includes(lowerQuery) ||
-            item.event_location.toLowerCase().includes(lowerQuery)
+        const filtered = window.appState.events.filter(item =>
+            (item.name || '').toLowerCase().includes(lowerQuery) ||
+            (item.event_id || '').toLowerCase().includes(lowerQuery) ||
+            (item.managed_by || '').toLowerCase().includes(lowerQuery) ||
+            (item.location || '').toLowerCase().includes(lowerQuery)
         );
         renderEvents(filtered);
     }
@@ -447,6 +456,19 @@ window.editEquipment = function(id) {
 window.deleteEquipment = function(id, name) {
     if (confirm(`Are you sure you want to delete "${name}"?`)) {
         deleteEquipmentItem(id);
+    }
+};
+
+window.editEvent = function(id) {
+    const item = window.appState.events.find(e => e.id === id);
+    if (item && window.eventsModal?.openModal) {
+        window.eventsModal.openModal(item);
+    }
+};
+
+window.deleteEvent = function(id, name) {
+    if (confirm(`Are you sure you want to delete event "${name || id}"?`)) {
+        window.utils.deleteEvent(id);
     }
 };
 

@@ -10,11 +10,12 @@ export async function eventRoutes(fastify: FastifyInstance) {
   // Get all events
   fastify.get('/events', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const event = await database.all(`
-        SELECT * FROM event 
-        ORDER BY date, name
+      // Fixed table name from "event" to "events"
+      const events = await database.all(`
+        SELECT * FROM events 
+        ORDER BY begin_date, name
       `);
-      return reply.send({ success: true, data: event });
+      return reply.send({ success: true, data: events });
     } catch (error) {
       return reply.status(500).send({ success: false, error: 'Failed to fetch events' });
     }
@@ -25,16 +26,13 @@ export async function eventRoutes(fastify: FastifyInstance) {
     try {
       const { id } = request.params;
       
-      const event = await database.get('SELECT * FROM event WHERE id = ?', [id]);
+      // Fixed table name from "event" to "events"
+      const event = await database.get('SELECT * FROM events WHERE id = ?', [id]);
       if (!event) {
         return reply.status(404).send({ success: false, error: 'Event not found' });
       }
 
-      const result = {
-        ...event,
-      };
-
-      return reply.send({ success: true, data: result });
+      return reply.send({ success: true, data: event });
     } catch (error) {
       return reply.status(500).send({ success: false, error: 'Failed to fetch event details' });
     }
@@ -47,26 +45,28 @@ export async function eventRoutes(fastify: FastifyInstance) {
       const id = uuidv4();
       const now = new Date().toISOString();
 
+      // Fixed parameter order and added missing managed_by
       await database.run(`
-        INSERT INTO events (id, name, description, event_id, location, begin_date, end_date, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [id, event.name, event.description, event.location, event.begin_date, event.end_date, now, now]);
+        INSERT INTO events (id, name, description, event_id, location, managed_by, begin_date, end_date, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [id, event.name, event.description || '', event.event_id, event.location, event.managed_by || 'System', event.begin_date, event.end_date, now, now]);
 
-      const newEquipment = await database.get('SELECT * FROM equipment WHERE id = ?', [id]);
-      return reply.status(201).send({ success: true, data: newEquipment });
+      const newEvent = await database.get('SELECT * FROM events WHERE id = ?', [id]);
+      return reply.status(201).send({ success: true, data: newEvent });
     } catch (error) {
-      return reply.status(500).send({ success: false, error: 'Failed to create equipment' });
+      console.error('Create event error:', error);
+      return reply.status(500).send({ success: false, error: 'Failed to create event' });
     }
   });
 
-  // Update equipment
+  // Update event
   fastify.put('/events/:id', async (request: FastifyRequest<{ Params: { id: string }, Body: UpdateEvent }>, reply: FastifyReply) => {
     try {
       const { id } = request.params;
       const updates = request.body;
       const now = new Date().toISOString();
 
-      const validFields: (keyof UpdateEvent)[] = ['name', 'description', 'event_id', 'location', 'begin_date', 'end_date']; // TODO: created_at, now(updated_at)
+      const validFields: (keyof UpdateEvent)[] = ['name', 'description', 'event_id', 'location', 'managed_by', 'begin_date', 'end_date', 'status'];
       const fieldsToUpdate = validFields.filter(field => updates[field] !== undefined);
       
       if (fieldsToUpdate.length === 0) {
@@ -88,7 +88,7 @@ export async function eventRoutes(fastify: FastifyInstance) {
       const updatedEvent = await database.get('SELECT * FROM events WHERE id = ?', [id]);
       return reply.send({ success: true, data: updatedEvent });
     } catch (error) {
-      return reply.status(500).send({ success: false, error: 'Failed to update equipment' });
+      return reply.status(500).send({ success: false, error: 'Failed to update event' });
     }
   });
 
@@ -96,19 +96,13 @@ export async function eventRoutes(fastify: FastifyInstance) {
   fastify.delete('/events/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
       const { id } = request.params;
-      
-      // Check if event has ended // TODO:
-    //   const activeBorrowings = await database.all('SELECT * FROM borrowings WHERE equipment_id = ? AND status = ?', [id, 'borrowed']);
-    //   if (activeBorrowings.length > 0) {
-    //     return reply.status(400).send({ success: false, error: 'Cannot delete equipment with active borrowings' });
-    //   }
 
       const result = await database.run('DELETE FROM events WHERE id = ?', [id]);
       if (result.changes === 0) {
         return reply.status(404).send({ success: false, error: 'Event not found' });
       }
 
-      return reply.send({ success: true, message: 'Evment deleted successfully' });
+      return reply.send({ success: true, message: 'Event deleted successfully' });
     } catch (error) {
       return reply.status(500).send({ success: false, error: 'Failed to delete event' });
     }

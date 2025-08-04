@@ -1,5 +1,3 @@
-// js/borrow-modal.js - Borrow modal functionality with QR integration
-
 import { 
     getFormData, 
     validateBorrowForm, 
@@ -53,9 +51,47 @@ function setupEventListeners() {
             console.error('Failed to load QR scanner:', error);
         });
     });
+
+    // Event selection change handler
+    document.getElementById('eventSelect')?.addEventListener('change', (e) => {
+        const selectedEventId = e.target.value;
+        const eventNameField = document.getElementById('eventName');
+        const eventLocationField = document.getElementById('eventLocation');
+        
+        if (selectedEventId && window.appState.events) {
+            const selectedEvent = window.appState.events.find(event => event.id === selectedEventId);
+            if (selectedEvent) {
+                // Update hidden field for backward compatibility
+                if (eventNameField) {
+                    eventNameField.value = selectedEvent.name;
+                }
+                // Auto-fill event location
+                if (eventLocationField) {
+                    eventLocationField.value = selectedEvent.location;
+                }
+            }
+        } else {
+            // Clear fields if no event selected
+            if (eventNameField) eventNameField.value = '';
+            if (eventLocationField) eventLocationField.value = '';
+        }
+    });
+
+    // Add new event button
+    document.getElementById('add-event-from-borrow')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Add Event from Borrow button clicked');
+        
+        // Open events modal
+        if (window.eventsModal?.openModal) {
+            window.eventsModal.openModal();
+        } else {
+            console.error('Events modal not available');
+        }
+    });
 }
 
-export function openModal() {
+export async function openModal() {
     initializeElements();
     
     if (!borrowModal) {
@@ -63,10 +99,14 @@ export function openModal() {
         return;
     }
     
-    console.log('Opening borrow modal, available equipment:', window.appState.equipment.filter(item => item.available_count > 0).length);
+    console.log('Opening borrow modal, loading data...');
     
-    // Populate equipment dropdown
+    // Load events and equipment data
+    await loadModalData();
+    
+    // Populate dropdowns
     populateEquipmentDropdown();
+    populateEventsDropdown();
     
     // Reset form
     borrowForm?.reset();
@@ -87,6 +127,30 @@ export function openModal() {
     if (!borrowModal.dataset.initialized) {
         setupEventListeners();
         borrowModal.dataset.initialized = 'true';
+    }
+}
+
+async function loadModalData() {
+    try {
+        console.log('Loading data for borrow modal...');
+        
+        // Load events if not already loaded or if empty
+        if (!window.appState.events || window.appState.events.length === 0) {
+            if (window.dashboard?.loadEventItems) {
+                await window.dashboard.loadEventItems();
+            }
+        }
+        
+        // Load equipment if not already loaded or if empty
+        if (!window.appState.equipment || window.appState.equipment.length === 0) {
+            if (window.dashboard?.loadEquipment) {
+                await window.dashboard.loadEquipment();
+            }
+        }
+        
+        console.log(`✅ Modal data loaded: ${window.appState.events?.length || 0} events, ${window.appState.equipment?.length || 0} equipment`);
+    } catch (error) {
+        console.error('Failed to load modal data:', error);
     }
 }
 
@@ -113,6 +177,18 @@ async function handleSubmission(event) {
     if (!borrowForm) return;
     
     const data = getFormData(borrowForm);
+    
+    // Special handling for event selection
+    const eventSelect = document.getElementById('eventSelect');
+    const eventNameField = document.getElementById('eventName');
+    
+    if (eventSelect && eventSelect.value) {
+        // If event is selected from dropdown, ensure event_name is set
+        const selectedEvent = window.appState.events?.find(e => e.id === eventSelect.value);
+        if (selectedEvent) {
+            data.event_name = selectedEvent.name;
+        }
+    }
     
     if (!validateBorrowForm(data)) {
         return;
@@ -158,7 +234,7 @@ function populateEquipmentDropdown() {
     const select = document.getElementById('borrowEquipment');
     if (!select) return;
     
-    const availableEquipment = window.appState.equipment.filter(item => item.available_count > 0);
+    const availableEquipment = window.appState.equipment?.filter(item => item.available_count > 0) || [];
     
     const escapeHtml = (text) => {
         if (!text) return '';
@@ -172,6 +248,38 @@ function populateEquipmentDropdown() {
         ${availableEquipment.map(item => `
             <option value="${item.id}">
                 ${escapeHtml(item.name)} (${item.available_count}/${item.total_count} available) - ${escapeHtml(item.rubric)}
+            </option>
+        `).join('')}
+    `;
+}
+
+function populateEventsDropdown() {
+    const select = document.getElementById('eventSelect');
+    if (!select) return;
+    
+    const events = window.appState.events || [];
+    
+    console.log('Populating events dropdown with:', events.length, 'events');
+    
+    const escapeHtml = (text) => {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    };
+    
+    if (events.length === 0) {
+        select.innerHTML = `
+            <option value="">No events available - create one first</option>
+        `;
+        return;
+    }
+    
+    select.innerHTML = `
+        <option value="">Select an event</option>
+        ${events.map(event => `
+            <option value="${event.id}">
+                ${escapeHtml(event.name)} - ${escapeHtml(event.location)} (${escapeHtml(event.event_id)})
             </option>
         `).join('')}
     `;
@@ -208,23 +316,29 @@ export function selectEquipmentInDropdown(equipment) {
     }
 }
 
+// Function to refresh events dropdown when new event is added
+export function refreshEventsDropdown() {
+    console.log('Refreshing events dropdown...');
+    populateEventsDropdown();
+}
+
 // Global function for quick borrow (called from dashboard)
 window.openBorrowModalWithEquipment = function(equipmentId) {
-    openModal();
-    
-    // Pre-select equipment after modal is open
-    setTimeout(() => {
-        const equipmentSelect = document.getElementById('borrowEquipment');
-        if (equipmentSelect) {
-            equipmentSelect.value = equipmentId;
-            
-            // Focus on borrower name field
-            const borrowerNameInput = document.getElementById('borrowerName');
-            if (borrowerNameInput) {
-                borrowerNameInput.focus();
+    openModal().then(() => {
+        // Pre-select equipment after modal is open
+        setTimeout(() => {
+            const equipmentSelect = document.getElementById('borrowEquipment');
+            if (equipmentSelect) {
+                equipmentSelect.value = equipmentId;
+                
+                // Focus on borrower name field
+                const borrowerNameInput = document.getElementById('borrowerName');
+                if (borrowerNameInput) {
+                    borrowerNameInput.focus();
+                }
             }
-        }
-    }, 100);
+        }, 100);
+    });
 };
 
-console.log('✅ Borrow modal module loaded');
+console.log('✅ Borrow modal module loaded with events integration');
