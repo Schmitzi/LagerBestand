@@ -126,6 +126,18 @@ export function validateBorrowForm(data) {
     return true;
 }
 
+export function validateEventsForm(data) {
+    const required = ['name', 'event_id', 'location'];
+    const missing = required.filter(field => !data[field]);
+    
+    if (missing.length > 0) {
+        showToast('error', `Please fill in: ${missing.join(', ')}`);
+        return false;
+    }
+    
+    return true;
+}
+
 // Date/Time Utilities
 export function formatDate(dateString) {
     if (!dateString) return '';
@@ -274,6 +286,76 @@ export async function returnEquipmentItem(borrowingId, data) {
         }
     } catch (error) {
         console.error('Failed to return equipment:', error);
+        return false;
+    }
+}
+
+// Events
+
+export async function createEvent(data) {
+    try {
+        const result = await apiCall('/events', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        
+        if (result.success) {
+            showToast('success', 'Event added successfully!');
+            if (window.dashboard?.loadData) {
+                await window.dashboard.loadData();
+            }
+            return true;
+        } else {
+            showToast('error', result.error || 'Failed to add event');
+            return false;
+        }
+    } catch (error) {
+        console.error('Failed to create event:', error);
+        return false;
+    }
+}
+
+export async function updateEvent(id, data) {
+    try {
+        const result = await apiCall(`/events/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+        
+        if (result.success) {
+            showToast('success', 'Event updated successfully!');
+            if (window.dashboard?.loadData) {
+                await window.dashboard.loadData();
+            }
+            return true;
+        } else {
+            showToast('error', result.error || 'Failed to update event');
+            return false;
+        }
+    } catch (error) {
+        console.error('Failed to update event:', error);
+        return false;
+    }
+}
+
+export async function deleteEvent(id) {
+    try {
+        const result = await apiCall(`/events/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (result.success) {
+            showToast('success', 'Event deleted successfully!');
+            if (window.dashboard?.loadData) {
+                await window.dashboard.loadData();
+            }
+            return true;
+        } else {
+            showToast('error', result.error || 'Failed to delete event');
+            return false;
+        }
+    } catch (error) {
+        console.error('Failed to delete event:', error);
         return false;
     }
 }

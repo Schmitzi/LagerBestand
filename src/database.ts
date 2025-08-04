@@ -57,6 +57,23 @@ class Database {
       )
     `);
 
+    // Borrowings table
+    await run(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        location TEXT NOT NULL,
+        managed_by TEXT NOT NULL,
+        begin_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        status TEXT DEFAULT 'upcoming' CHECK(status IN ('upcoming', 'in progress', 'ended')),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Create indexes
     await run(`
       CREATE INDEX IF NOT EXISTS idx_equipment_rubric ON equipment(rubric);
@@ -64,6 +81,7 @@ class Database {
       CREATE INDEX IF NOT EXISTS idx_borrowings_equipment ON borrowings(equipment_id);
       CREATE INDEX IF NOT EXISTS idx_borrowings_status ON borrowings(status);
       CREATE INDEX IF NOT EXISTS idx_borrowings_dates ON borrowings(borrowing_date, expected_return_date);
+      CREATE INDEX IF NOT EXISTS idx_events_status ON events(status);
     `);
 
     // Create a trigger to update available_count when borrowings change

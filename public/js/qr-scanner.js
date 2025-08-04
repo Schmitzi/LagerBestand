@@ -20,13 +20,15 @@ async function initializeElements() {
 
 async function loadQRScannerLibrary() {
     try {
-        // Try to load from CDN (more reliable than npm in this setup)
+        // Check if already loaded
         if (window.QrScanner) {
             QrScannerClass = window.QrScanner;
             console.log('✅ QR Scanner already loaded from CDN');
             return true;
         }
 
+        console.log('Loading QR Scanner library...');
+        
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.src = 'https://unpkg.com/qr-scanner@1.4.2/qr-scanner.umd.min.js';
@@ -75,30 +77,26 @@ export async function openModal() {
     const elementsReady = await initializeElements();
     if (!elementsReady) {
         console.error('QR Scanner elements not ready');
+        // Show fallback for QR scanning
+        showQRFallback();
         return;
     }
     
     // Load QR Scanner library if not already loaded
     if (!QrScannerClass) {
         try {
+            qrResult.innerHTML = '<div class="text-blue-600"><i class="fas fa-spinner fa-spin mr-2"></i>Loading QR Scanner...</div>';
             await loadQRScannerLibrary();
         } catch (error) {
             console.error('Failed to load QR Scanner library:', error);
-            if (qrResult) {
-                qrResult.innerHTML = `
-                    <div class="text-red-600">
-                        <i class="fas fa-exclamation-triangle mb-2"></i><br>
-                        Failed to load QR Scanner<br>
-                        <span class="text-xs">Please check your internet connection</span>
-                    </div>
-                `;
-            }
+            showQRError('Failed to load QR Scanner library');
             return;
         }
     }
     
     if (!QrScannerClass) {
         console.error('QR Scanner not available');
+        showQRError('QR Scanner not available');
         return;
     }
     
@@ -147,40 +145,66 @@ function startScanning() {
         qrResult.innerHTML = '<div class="text-green-600"><i class="fas fa-camera mr-2"></i>Camera ready - point at QR code</div>';
     }).catch(err => {
         console.error('QR Scanner start error:', err);
-        
-        // Show helpful message based on error
-        if (err.name === 'NotAllowedError') {
-            qrResult.innerHTML = `
-                <div class="text-red-600">
-                    <i class="fas fa-exclamation-circle mb-2"></i><br>
-                    Camera access denied<br>
-                    <span class="text-xs">Please allow camera access and try again</span>
-                </div>
-            `;
-        } else if (err.name === 'NotFoundError') {
-            qrResult.innerHTML = `
-                <div class="text-red-600">
-                    <i class="fas fa-video-slash mb-2"></i><br>
-                    No camera found<br>
-                    <span class="text-xs">Please connect a camera and try again</span>
-                </div>
-            `;
-        } else {
-            qrResult.innerHTML = `
-                <div class="text-red-600">
-                    <i class="fas fa-exclamation-triangle mb-2"></i><br>
-                    Camera error<br>
-                    <span class="text-xs">${err.message || 'Unknown error'}</span>
-                </div>
-            `;
-        }
+        showCameraError(err);
     });
+}
+
+function showCameraError(err) {
+    if (!qrResult) return;
+    
+    // Show helpful message based on error
+    if (err.name === 'NotAllowedError') {
+        qrResult.innerHTML = `
+            <div class="text-red-600">
+                <i class="fas fa-exclamation-circle mb-2"></i><br>
+                Camera access denied<br>
+                <span class="text-xs">Please allow camera access and try again</span>
+            </div>
+        `;
+    } else if (err.name === 'NotFoundError') {
+        qrResult.innerHTML = `
+            <div class="text-red-600">
+                <i class="fas fa-video-slash mb-2"></i><br>
+                No camera found<br>
+                <span class="text-xs">Please connect a camera and try again</span>
+            </div>
+        `;
+    } else {
+        qrResult.innerHTML = `
+            <div class="text-red-600">
+                <i class="fas fa-exclamation-triangle mb-2"></i><br>
+                Camera error<br>
+                <span class="text-xs">${err.message || 'Unknown error'}</span>
+            </div>
+        `;
+    }
+}
+
+function showQRError(message) {
+    if (!qrResult) return;
+    qrResult.innerHTML = `
+        <div class="text-red-600">
+            <i class="fas fa-exclamation-triangle mb-2"></i><br>
+            ${message}<br>
+            <span class="text-xs">Please check your internet connection</span>
+        </div>
+    `;
+}
+
+function showQRFallback() {
+    // Show a simple input dialog for manual QR code entry
+    const qrCode = prompt('QR Scanner not available. Please enter the equipment ID manually:');
+    if (qrCode) {
+        onScanSuccess(qrCode);
+    }
 }
 
 async function onScanSuccess(qrCodeData) {
     console.log('QR Code scanned:', qrCodeData);
     
-    qrResult.innerHTML = '<div class="text-blue-600"><i class="fas fa-spinner fa-spin mr-2"></i>Processing...</div>';
+    if (qrResult) {
+        qrResult.innerHTML = '<div class="text-blue-600"><i class="fas fa-spinner fa-spin mr-2"></i>Processing...</div>';
+    }
     
     try {
         // Call your equipment API to look up the equipment
@@ -188,13 +212,15 @@ async function onScanSuccess(qrCodeData) {
         
         if (!response.ok) {
             if (response.status === 404) {
-                qrResult.innerHTML = `
-                    <div class="text-red-600">
-                        <i class="fas fa-exclamation-circle mb-2"></i><br>
-                        Equipment not found<br>
-                        <span class="text-xs">QR Code: ${escapeHtml(qrCodeData)}</span>
-                    </div>
-                `;
+                if (qrResult) {
+                    qrResult.innerHTML = `
+                        <div class="text-red-600">
+                            <i class="fas fa-exclamation-circle mb-2"></i><br>
+                            Equipment not found<br>
+                            <span class="text-xs">QR Code: ${escapeHtml(qrCodeData)}</span>
+                        </div>
+                    `;
+                }
                 return;
             }
             throw new Error(`HTTP ${response.status}`);
@@ -206,52 +232,67 @@ async function onScanSuccess(qrCodeData) {
             const equipmentData = equipment.data;
             
             // Success - show found equipment
-            qrResult.innerHTML = `
-                <div class="text-green-600">
-                    <i class="fas fa-check-circle mb-2"></i><br>
-                    <strong>Found:</strong> ${escapeHtml(equipmentData.name)}<br>
-                    <span class="text-xs">${escapeHtml(equipmentData.rubric)} - ${equipmentData.available_count}/${equipmentData.total_count} available</span>
-                </div>
-            `;
-            
-            // Check if equipment is available
-            if (equipmentData.available_count > 0) {
-                // Add equipment to borrow modal dropdown and select it
-                if (window.borrowModal?.selectEquipmentInDropdown) {
-                    window.borrowModal.selectEquipmentInDropdown(equipmentData);
-                }
-                
-                // Close QR modal after short delay
-                setTimeout(closeModal, 1500);
-            } else {
+            if (qrResult) {
                 qrResult.innerHTML = `
-                    <div class="text-orange-600">
-                        <i class="fas fa-exclamation-triangle mb-2"></i><br>
+                    <div class="text-green-600">
+                        <i class="fas fa-check-circle mb-2"></i><br>
                         <strong>Found:</strong> ${escapeHtml(equipmentData.name)}<br>
-                        <span class="text-xs text-red-600">Currently not available (0/${equipmentData.total_count})</span>
+                        <span class="text-xs">${escapeHtml(equipmentData.rubric)} - ${equipmentData.available_count}/${equipmentData.total_count} available</span>
                     </div>
                 `;
             }
             
+            // Check if equipment is available
+            if (equipmentData.available_count > 0) {
+                // Import and use borrow modal to select equipment
+                import('./borrow-modal.js').then(borrowModule => {
+                    if (borrowModule.selectEquipmentInDropdown) {
+                        borrowModule.selectEquipmentInDropdown(equipmentData);
+                    }
+                }).catch(error => {
+                    console.error('Failed to load borrow modal:', error);
+                });
+                
+                // Close QR modal after short delay
+                setTimeout(closeModal, 1500);
+            } else {
+                if (qrResult) {
+                    qrResult.innerHTML = `
+                        <div class="text-orange-600">
+                            <i class="fas fa-exclamation-triangle mb-2"></i><br>
+                            <strong>Found:</strong> ${escapeHtml(equipmentData.name)}<br>
+                            <span class="text-xs text-red-600">Currently not available (0/${equipmentData.total_count})</span>
+                        </div>
+                    `;
+                }
+                
+                // Still close after delay to let user see the message
+                setTimeout(closeModal, 3000);
+            }
+            
         } else {
-            qrResult.innerHTML = `
-                <div class="text-red-600">
-                    <i class="fas fa-exclamation-circle mb-2"></i><br>
-                    Equipment not found<br>
-                    <span class="text-xs">QR Code: ${escapeHtml(qrCodeData)}</span>
-                </div>
-            `;
+            if (qrResult) {
+                qrResult.innerHTML = `
+                    <div class="text-red-600">
+                        <i class="fas fa-exclamation-circle mb-2"></i><br>
+                        Equipment not found<br>
+                        <span class="text-xs">QR Code: ${escapeHtml(qrCodeData)}</span>
+                    </div>
+                `;
+            }
         }
         
     } catch (error) {
         console.error('Equipment lookup error:', error);
-        qrResult.innerHTML = `
-            <div class="text-red-600">
-                <i class="fas fa-exclamation-triangle mb-2"></i><br>
-                Error looking up equipment<br>
-                <span class="text-xs">${error.message}</span>
-            </div>
-        `;
+        if (qrResult) {
+            qrResult.innerHTML = `
+                <div class="text-red-600">
+                    <i class="fas fa-exclamation-triangle mb-2"></i><br>
+                    Error looking up equipment<br>
+                    <span class="text-xs">${error.message}</span>
+                </div>
+            `;
+        }
     }
 }
 

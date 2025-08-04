@@ -8,67 +8,65 @@ import {
 
 let borrowModal, borrowForm;
 
-export function initialize() {
+function initializeElements() {
     borrowModal = document.getElementById('borrowModal');
     borrowForm = document.getElementById('borrowForm');
-
-    if (!borrowModal) {
-        console.warn('Borrow modal not found, skipping initialization');
-        return;
-    }
-
-    setupEventListeners();
-    
-    // Make modal functions available globally
-    window.borrowModal = {
-        open: openBorrowModal,
-        close: closeBorrowModal,
-        selectEquipment: selectEquipmentInDropdown
-    };
-    
-    console.log('✅ Borrow modal module initialized');
 }
 
 function setupEventListeners() {
+    if (!borrowModal) return;
+
     // Close modal event listeners
-    document.getElementById('closeBorrowModal')?.addEventListener('click', closeBorrowModal);
-    document.getElementById('cancelBorrowBtn')?.addEventListener('click', closeBorrowModal);
+    document.getElementById('closeBorrowModal')?.addEventListener('click', closeModal);
+    document.getElementById('cancelBorrowBtn')?.addEventListener('click', closeModal);
 
     // Close modal when clicking outside
-    borrowModal?.addEventListener('click', (event) => {
+    borrowModal.addEventListener('click', (event) => {
         if (event.target === borrowModal) {
-            closeBorrowModal();
+            closeModal();
         }
     });
 
     // Form submission
-    borrowForm?.addEventListener('submit', handleBorrowSubmission);
+    borrowForm?.addEventListener('submit', handleSubmission);
 
     // Handle ESC key
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && !borrowModal?.classList.contains('hidden')) {
-            closeBorrowModal();
+            closeModal();
         }
     });
 
     // QR scan button
     document.getElementById('scan-qr-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        if (window.qrScanner && window.qrScanner.open) {
-            window.qrScanner.open();
-        }
+        console.log('QR scan button clicked');
+        
+        // Import and use QR scanner
+        import('./qr-scanner.js').then(qrModule => {
+            if (qrModule.openModal) {
+                qrModule.openModal();
+            } else {
+                console.error('QR scanner openModal function not found');
+            }
+        }).catch(error => {
+            console.error('Failed to load QR scanner:', error);
+        });
     });
 }
 
-function openBorrowModal() {
-    if (!borrowModal) return;
+export function openModal() {
+    initializeElements();
+    
+    if (!borrowModal) {
+        console.error('Borrow modal not found');
+        return;
+    }
     
     console.log('Opening borrow modal, available equipment:', window.appState.equipment.filter(item => item.available_count > 0).length);
     
     // Populate equipment dropdown
-    if (window.dashboard && window.dashboard.populateEquipmentDropdown) {
-        window.dashboard.populateEquipmentDropdown();
-    }
+    populateEquipmentDropdown();
     
     // Reset form
     borrowForm?.reset();
@@ -84,9 +82,15 @@ function openBorrowModal() {
     if (firstInput) {
         setTimeout(() => firstInput.focus(), 100);
     }
+    
+    // Setup event listeners if not already done
+    if (!borrowModal.dataset.initialized) {
+        setupEventListeners();
+        borrowModal.dataset.initialized = 'true';
+    }
 }
 
-function closeBorrowModal() {
+export function closeModal() {
     if (!borrowModal) return;
     
     borrowModal.classList.add('hidden');
@@ -103,7 +107,7 @@ function closeBorrowModal() {
     }
 }
 
-async function handleBorrowSubmission(event) {
+async function handleSubmission(event) {
     event.preventDefault();
     
     if (!borrowForm) return;
@@ -124,7 +128,7 @@ async function handleBorrowSubmission(event) {
         const success = await borrowEquipment(data);
         
         if (success) {
-            closeBorrowModal();
+            closeModal();
         }
     } catch (error) {
         console.error('Borrow submission error:', error);
@@ -150,10 +154,35 @@ function setDefaultDates() {
     }
 }
 
+function populateEquipmentDropdown() {
+    const select = document.getElementById('borrowEquipment');
+    if (!select) return;
+    
+    const availableEquipment = window.appState.equipment.filter(item => item.available_count > 0);
+    
+    const escapeHtml = (text) => {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    };
+    
+    select.innerHTML = `
+        <option value="">Select equipment to borrow</option>
+        ${availableEquipment.map(item => `
+            <option value="${item.id}">
+                ${escapeHtml(item.name)} (${item.available_count}/${item.total_count} available) - ${escapeHtml(item.rubric)}
+            </option>
+        `).join('')}
+    `;
+}
+
 // Function called by QR scanner when equipment is found
 export function selectEquipmentInDropdown(equipment) {
     const equipmentSelect = document.getElementById('borrowEquipment');
     if (!equipmentSelect) return;
+    
+    console.log('Selecting equipment in dropdown:', equipment);
     
     // Check if equipment is already in dropdown
     let existingOption = equipmentSelect.querySelector(`option[value="${equipment.id}"]`);
@@ -181,7 +210,7 @@ export function selectEquipmentInDropdown(equipment) {
 
 // Global function for quick borrow (called from dashboard)
 window.openBorrowModalWithEquipment = function(equipmentId) {
-    openBorrowModal();
+    openModal();
     
     // Pre-select equipment after modal is open
     setTimeout(() => {
@@ -198,4 +227,4 @@ window.openBorrowModalWithEquipment = function(equipmentId) {
     }, 100);
 };
 
-console.log('Borrow modal module loaded');
+console.log('✅ Borrow modal module loaded');

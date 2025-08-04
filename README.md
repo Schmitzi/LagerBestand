@@ -76,3 +76,17 @@ Wenn du die Anwendung beenden möchtest:
 ---
 
 Viel Erfolg mit LagerBestand!
+
+
+## To implement
+
+- Add events (dropdown)
+- User accounts (auth)
+- Qr code
+   - add to db
+   - display / printable
+
+
+## Ideas from Philip
+- Scan qr code in room and link equipment
+- Multiple rooms for same event

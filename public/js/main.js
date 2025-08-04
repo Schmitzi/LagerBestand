@@ -72,6 +72,9 @@ class EquipmentBorrowingApp {
             
             const returnModalModule = await import('./return-modal.js');
             this.modules.returnModal = returnModalModule;
+
+            const eventsModalModule = await import('./events-modal.js');
+            this.modules.eventsModal = eventsModalModule;
             
             // Load QR scanner
             const qrModule = await import('./qr-scanner.js');
@@ -135,6 +138,52 @@ class EquipmentBorrowingApp {
                                 Cancel
                             </button>
                             <button type="submit" id="submitEquipmentBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                                Add Equipment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Event Modal -->
+            <div id="eventsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-2xl w-full max-h-screen overflow-y-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 id="eventsModalTitle" class="text-lg font-semibold text-gray-900">Add Event</h3>
+                        <button id="closeEventsModal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="eventsForm" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="eventsName" class="block text-sm font-medium text-gray-700 mb-1">Event Name *</label>
+                                <input type="text" id="eventName" name="name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="eventId" class="block text-sm font-medium text-gray-700 mb-1">Event ID *</label>
+                                <input type="text" id="eventId" name="event_id" required min="1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        
+                        <!-- <div>
+                            <label for="eventDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="eventDescription" name="description" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        </div> -->
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                                <input type="text" id="location" name="location" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Hörsaal 1">
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-6">
+                            <button type="button" id="cancelEventBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" id="submitEventsBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                                 Add Equipment
                             </button>
                         </div>
@@ -299,6 +348,7 @@ class EquipmentBorrowingApp {
         console.log('Setting up main event listeners...');
         
         // Header buttons - NOW with proper module references
+
         document.getElementById('addEquipmentBtn')?.addEventListener('click', () => {
             console.log('Add Equipment button clicked');
             if (this.modules.equipmentModal?.openModal) {
@@ -328,11 +378,22 @@ class EquipmentBorrowingApp {
                 console.error('Return modal module not available');
             }
         });
+
+        document.getElementById('addEventBtn')?.addEventListener('click', () => {
+            console.log('Add Event button clicked');
+            if (this.modules.eventsModal?.openModal) {
+                console.log('Opening events modal...');
+                this.modules.eventsModal.openModal();
+            } else {
+                console.error('Event modal module not available');
+            }
+        });
         
         // Tab navigation
         document.getElementById('equipmentTab')?.addEventListener('click', () => this.switchTab('equipment'));
         document.getElementById('borrowingsTab')?.addEventListener('click', () => this.switchTab('borrowings'));
         document.getElementById('overdueTab')?.addEventListener('click', () => this.switchTab('overdue'));
+        document.getElementById('eventTab')?.addEventListener('click', () => this.switchTab('events'));
         
         // Search
         document.getElementById('searchInput')?.addEventListener('input', (e) => {
@@ -396,6 +457,8 @@ class EquipmentBorrowingApp {
                 this.modules.dashboard.loadBorrowings?.();
             } else if (view === 'overdue') {
                 this.modules.dashboard.loadOverdueItems?.();
+            } else if (view === 'events') {
+                this.modules.dashboard.loadEventItems?. ();
             }
         }
     }

@@ -1,128 +1,136 @@
-// js/borrow-modal.js - Borrow modal functionality with QR integration
+// js/equipment-modal.js - Equipment modal functionality
 
-import { getFormData, validateBorrowForm, borrowEquipment } from './utils.js';
+import { 
+    getFormData, 
+    validateEquipmentForm, 
+    createEquipment, 
+    updateEquipment 
+} from './utils.js';
 
-let borrowModal, borrowForm;
+let equipmentModal, equipmentForm;
 
 function initializeElements() {
-    borrowModal = document.getElementById('borrowModal');
-    borrowForm = document.getElementById('borrowForm');
+    equipmentModal = document.getElementById('equipmentModal');
+    equipmentForm = document.getElementById('equipmentForm');
 }
 
 function setupEventListeners() {
-    if (!borrowModal) return;
+    if (!equipmentModal) return;
 
     // Close modal event listeners
-    document.getElementById('closeBorrowModal')?.addEventListener('click', closeModal);
-    document.getElementById('cancelBorrowBtn')?.addEventListener('click', closeModal);
+    document.getElementById('closeEquipmentModal')?.addEventListener('click', closeModal);
+    document.getElementById('cancelEquipmentBtn')?.addEventListener('click', closeModal);
 
     // Close modal when clicking outside
-    borrowModal.addEventListener('click', (event) => {
-        if (event.target === borrowModal) {
+    equipmentModal.addEventListener('click', (event) => {
+        if (event.target === equipmentModal) {
             closeModal();
         }
     });
 
     // Form submission
-    borrowForm?.addEventListener('submit', handleSubmission);
+    equipmentForm?.addEventListener('submit', handleSubmission);
 
     // Handle ESC key
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !borrowModal?.classList.contains('hidden')) {
+        if (event.key === 'Escape' && !equipmentModal?.classList.contains('hidden')) {
             closeModal();
-        }
-    });
-
-    // QR scan button
-    document.getElementById('scan-qr-btn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (window.qrScanner?.openModal) {
-            window.qrScanner.openModal();
-        } else {
-            console.warn('QR Scanner not available');
         }
     });
 }
 
-export function openModal() {
+export function openModal(item = null) {
     initializeElements();
     
-    if (!borrowModal) {
-        console.error('Borrow modal not found');
+    if (!equipmentModal) {
+        console.error('Equipment modal not found');
         return;
     }
     
-    console.log('Opening borrow modal, available equipment:', window.appState.equipment.filter(item => item.available_count > 0).length);
+    console.log('Opening equipment modal...');
     
-    // Populate equipment dropdown
-    if (window.dashboard?.populateEquipmentDropdown) {
-        window.dashboard.populateEquipmentDropdown();
+    // Set edit mode
+    window.appState.currentEditId = item ? item.id : null;
+    
+    // Update modal title and button text
+    const modalTitle = document.getElementById('equipmentModalTitle');
+    const submitBtn = document.getElementById('submitEquipmentBtn');
+    
+    if (item) {
+        modalTitle.textContent = 'Edit Equipment';
+        submitBtn.textContent = 'Update Equipment';
+        fillEquipmentForm(item);
+    } else {
+        modalTitle.textContent = 'Add Equipment';
+        submitBtn.textContent = 'Add Equipment';
+        equipmentForm?.reset();
     }
     
-    // Reset form
-    borrowForm?.reset();
-    
-    // Set default dates
-    setDefaultDates();
-    
-    borrowModal.classList.remove('hidden');
-    borrowModal.classList.add('flex');
+    equipmentModal.classList.remove('hidden');
+    equipmentModal.classList.add('flex');
     
     // Focus on first input
-    const firstInput = borrowForm?.querySelector('select');
+    const firstInput = equipmentForm?.querySelector('input');
     if (firstInput) {
         setTimeout(() => firstInput.focus(), 100);
     }
     
     // Setup event listeners if not already done
-    if (!borrowModal.dataset.initialized) {
+    if (!equipmentModal.dataset.initialized) {
         setupEventListeners();
-        borrowModal.dataset.initialized = 'true';
+        equipmentModal.dataset.initialized = 'true';
     }
 }
 
 export function closeModal() {
-    if (!borrowModal) return;
+    if (!equipmentModal) return;
     
-    borrowModal.classList.add('hidden');
-    borrowModal.classList.remove('flex');
+    equipmentModal.classList.add('hidden');
+    equipmentModal.classList.remove('flex');
     
-    // Reset form
-    borrowForm?.reset();
+    // Reset form and state
+    equipmentForm?.reset();
+    window.appState.currentEditId = null;
     
     // Reset button state if it was in loading state
-    const submitBtn = borrowForm?.querySelector('button[type="submit"]');
+    const submitBtn = equipmentForm?.querySelector('button[type="submit"]');
     if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Borrow Equipment';
+        submitBtn.innerHTML = 'Add Equipment';
     }
 }
 
 async function handleSubmission(event) {
     event.preventDefault();
     
-    if (!borrowForm) return;
+    if (!equipmentForm) return;
     
-    const data = getFormData(borrowForm);
+    const data = getFormData(equipmentForm);
     
-    if (!validateBorrowForm(data)) {
+    if (!validateEquipmentForm(data)) {
         return;
     }
     
     // Show loading state
-    const submitBtn = borrowForm.querySelector('button[type="submit"]');
+    const submitBtn = equipmentForm.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Borrowing...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
     
     try {
-        const success = await borrowEquipment(data);
+        let success = false;
+        
+        if (window.appState.currentEditId) {
+            success = await updateEquipment(window.appState.currentEditId, data);
+        } else {
+            success = await createEquipment(data);
+        }
         
         if (success) {
             closeModal();
         }
     } catch (error) {
-        console.error('Borrow submission error:', error);
+        console.error('Equipment submission error:', error);
     } finally {
         // Reset button state
         submitBtn.disabled = false;
@@ -130,69 +138,14 @@ async function handleSubmission(event) {
     }
 }
 
-function setDefaultDates() {
-    const today = new Date().toISOString().split('T')[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+function fillEquipmentForm(item) {
+    if (!item || !equipmentForm) return;
     
-    const borrowingDateInput = document.getElementById('borrowingDate');
-    const expectedReturnDateInput = document.getElementById('expectedReturnDate');
-    
-    if (borrowingDateInput && !borrowingDateInput.value) {
-        borrowingDateInput.value = today;
-    }
-    if (expectedReturnDateInput && !expectedReturnDateInput.value) {
-        expectedReturnDateInput.value = nextWeek;
-    }
+    document.getElementById('equipmentName').value = item.name || '';
+    document.getElementById('equipmentDescription').value = item.description || '';
+    document.getElementById('totalCount').value = item.total_count || '';
+    document.getElementById('storageArea').value = item.storage_area || '';
+    document.getElementById('rubric').value = item.rubric || '';
 }
 
-// Function called by QR scanner when equipment is found
-export function selectEquipmentInDropdown(equipment) {
-    const equipmentSelect = document.getElementById('borrowEquipment');
-    if (!equipmentSelect) return;
-    
-    console.log('Selecting equipment in dropdown:', equipment);
-    
-    // Check if equipment is already in dropdown
-    let existingOption = equipmentSelect.querySelector(`option[value="${equipment.id}"]`);
-    
-    if (!existingOption) {
-        // Add new option if it doesn't exist
-        const newOption = document.createElement('option');
-        newOption.value = equipment.id;
-        newOption.textContent = `${equipment.name} (${equipment.available_count}/${equipment.total_count} available) - ${equipment.rubric}`;
-        equipmentSelect.appendChild(newOption);
-    }
-    
-    // Select the equipment
-    equipmentSelect.value = equipment.id;
-    
-    // Trigger change event if you have listeners
-    equipmentSelect.dispatchEvent(new Event('change'));
-    
-    // Focus on next field
-    const borrowerNameInput = document.getElementById('borrowerName');
-    if (borrowerNameInput) {
-        setTimeout(() => borrowerNameInput.focus(), 100);
-    }
-}
-
-// Global function for quick borrow (called from dashboard)
-window.openBorrowModalWithEquipment = function(equipmentId) {
-    openModal();
-    
-    // Pre-select equipment after modal is open
-    setTimeout(() => {
-        const equipmentSelect = document.getElementById('borrowEquipment');
-        if (equipmentSelect) {
-            equipmentSelect.value = equipmentId;
-            
-            // Focus on borrower name field
-            const borrowerNameInput = document.getElementById('borrowerName');
-            if (borrowerNameInput) {
-                borrowerNameInput.focus();
-            }
-        }
-    }, 100);
-};
-
-console.log('✅ Borrow modal module loaded');
+console.log('✅ Equipment modal module loaded');

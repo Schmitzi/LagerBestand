@@ -51,6 +51,19 @@ export async function loadOverdueItems() {
     }
 }
 
+export async function loadEventItems() {
+    try {
+        console.log('Loading events...');
+        const result = await apiCall('/events');
+        window.appState.events = result.data || [];
+        console.log(`✅ Loaded ${window.appState.overdueItems.length} events`);
+        renderEvents(window.appState.events);
+    } catch (error) {
+        console.error('Failed to load events:', error);
+        window.appState.events = [];
+    }
+}
+
 async function loadDashboardStats() {
     try {
         console.log('Loading dashboard stats...');
@@ -272,6 +285,57 @@ function renderOverdueItems(items) {
     `).join('');
 }
 
+function renderEvents(items) {
+    const eventsTable = document.getElementById('eventsTable');
+    if (!eventsTable) return;
+    
+    if (items.length === 0) {
+        eventsTable.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                    <i class="fas fa-check-circle text-4xl mb-4 block text-green-300"></i>
+                    <p class="text-lg">No events</p>
+                    <p class="text-sm">All events have finished</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    eventsTable.innerHTML = items.map(item => `
+        <tr class="hover:bg-red-50 transition-colors bg-red-25">
+            <td class="px-6 py-4">
+                <div>
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(item.name)}</div>
+                    <div class="text-xs text-gray-500">${escapeHtml(item.event_id)}</div>
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${escapeHtml(item.managed_by)}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div>
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(item.event_name)}</div>
+                    <div class="text-xs text-gray-500">${escapeHtml(item.location)}</div>
+                </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-red-600 font-medium">
+                ${formatDate(item.expected_return_date)}
+            </td>
+            <td class="px-6 py-4 text-sm font-medium">
+                <button 
+                    onclick="deleteEvent('${item.id}')" 
+                    class="action-btn text-red-600 hover:text-red-900"
+                    title="Delete Event"
+                >
+                    <i class="fas fa-trash"></i>
+                    Delete Event
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
 // Dropdown Population Functions
 export function populateEquipmentDropdown() {
     const select = document.getElementById('borrowEquipment');
@@ -330,6 +394,8 @@ export function handleSearch(query) {
             renderBorrowings(window.appState.borrowings);
         } else if (window.appState.currentView === 'overdue') {
             renderOverdueItems(window.appState.overdueItems);
+        } else if (window.appState.currentView === 'events') {
+            renderEvents(window.currentView.events);
         }
         return;
     }
@@ -360,6 +426,13 @@ export function handleSearch(query) {
             item.event_location.toLowerCase().includes(lowerQuery)
         );
         renderOverdueItems(filtered);
+    } else if (window.appState.currentView === 'events') {
+        const filtered = window.appState.overdueItems.filter(item =>
+            item.event_name.toLowerCase().includes(lowerQuery) ||
+            item.managed_by.toLowerCase().includes(lowerQuery) ||
+            item.event_location.toLowerCase().includes(lowerQuery)
+        );
+        renderEvents(filtered);
     }
 }
 

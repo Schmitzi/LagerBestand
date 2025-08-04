@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import staticFiles from '@fastify/static';
 import path from 'path';
 import { equipmentRoutes } from './routes/equipment';
+import { eventRoutes } from './routes/events';
 
 const fastify = Fastify({
   logger: {
@@ -23,6 +24,7 @@ fastify.register(staticFiles, {
 
 // API routes
 fastify.register(equipmentRoutes, { prefix: '/api' });
+fastify.register(eventRoutes, { prefix: '/api'});
 
 // Health check
 fastify.get('/health', async () => {
